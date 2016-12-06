@@ -1,0 +1,28 @@
+#### sample calibration file ###
+# these files are parsed with the Python ConfigParser and use an ini-style format
+# # or ; can be used for comments
+# each calibration file can contain one or more sections [section name] which denote one calibration
+# the variables making up the calibration can be given as name=value or name:value
+# see below for which values to supply
+
+
+#short name
+[example]
+
+#additional description for the GUI
+tooltip = this is an example calibration for testing
+
+# which color channel to use red, blue, green for colered images or grey for greyscale images
+channel = red
+
+# argument of the function for dose calculation
+# chose "netOD" to use net optical density as argument of the function (arg=log_10[(phi_0 - background)/(value-background)])
+# or "direct" to use raw pixel values arg=value-background
+argument=netOD
+background = 0.0
+# function to calculate the dose
+# currently two functions are implemented: the exp_poly: p1*arg+p2*arg^p3 and linear: p1 + p2*arg
+function = exp_poly
+p1=7.15949
+p2=10.1902
+p3=2.5932

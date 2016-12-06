@@ -1,0 +1,47 @@
+#EBT 1? calibrations from old IDL script
+
+[EBT1 200kV]
+tooltip = calibration from 14.06.2010, possibly wrong air pressure
+
+channel = red
+argument = netOD
+function = exp_poly
+background = 0.0
+
+p1 = 7.15949
+p2 = 10.1902
+p3 = 2.5932
+
+## ab 14.04.2009 neue Auswertung von Julias Kalibrierung Okt. 2008
+### 6.815D
+### 11.198D
+### 2.593D
+
+## ab 16.12.2009 neue Daten (kalibrierung Okt. 2009)
+### 6.99144691D
+### 10.494912D
+### 2.512588187D
+
+## neue Werte vom 12.03.2010
+### 6.7731D
+### 8.31073D
+### 2.20297D
+
+### ab 14-06-2010 neue Werte (Kalibrierung mit DFKY-Platten, Achtung:Luftdruck evtl. falsch)
+###7.15949D
+###10.1902D
+###2.5932D
+
+[EBT1]
+tooltip = calibration from 03.2009 at ELBE, unknown beam quality
+
+channel = red
+argument = netOD
+function = exp_poly
+background = 0.0
+
+p1 = 5.86617
+p2 = 10.28666
+p3 = 2.58651
+
+## ab 06.04. 09 (neue Kalibirerung an Elbe vom März 2009)

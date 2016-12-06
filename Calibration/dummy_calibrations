@@ -1,0 +1,43 @@
+# this file contains some dummy calibrations to create a heatmap directly from a color channel
+# can be used for scintillator or IP images
+
+
+[red dummy]
+tooltip=dummy for direct red channel
+channel= red
+argument=direct
+background=0
+function=linear
+p1=0
+p2=1
+p3=0
+
+[green dummy]
+tooltip=dummy for direct green channel
+channel= green
+argument=direct
+background=0
+function=linear
+p1=0
+p2=1
+p3=0
+
+[blue dummy]
+tooltip=dummy for direct blue channel
+channel= blue
+argument=direct
+background=0
+function=linear
+p1=0
+p2=1
+p3=0
+
+[grey dummy]
+tooltip=dummy for direct grey channel
+channel= grey
+argument=direct
+background=0
+function=linear
+p1=0
+p2=1
+p3=0
