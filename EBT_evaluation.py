@@ -39,22 +39,30 @@ calibration location into advanced settings:
     
 specify units in calib
 """
+#modules for exception handeling
+import sys
+import traceback
 
+#file manipulation and path functionality
+import os
 
+#add the modules to the search path
+sys.path.append(os.path.join(sys.path[0],"Modules"))
 
 #standard modules
 import logging #logging funtionality
 import sys
 import numpy as np
 
-#modules for exception handeling
-import sys
-import traceback
+
 
 #Qt stuff, with API variant that does not use QtVariables like QString but regular
 #Python variables (saves a lot of conversion headaches)
 import sip
-sip.setapi('QVariant', 2)
+API_NAMES = ["QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", "QVariant"]
+API_VERSION = 2
+for name in API_NAMES:
+    sip.setapi(name, API_VERSION)
 from PyQt4 import QtCore, QtGui
 
 
@@ -66,14 +74,8 @@ from matplotlib.backends.backend_qt4agg \
   import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 
-import os
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 from PIL import Image #image loading functionality, could also use Pillow?
-
-
 
 #Log widget by Andreas
 import Log

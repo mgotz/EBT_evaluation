@@ -5,11 +5,7 @@ Created on Sun Apr 24 20:10:16 2016
 @author: Malte
 
 core functions to load calibration data and calculate dose from scanned films
-
-make a dose class (sublass ndarray):
-    has method to fit stuff
-    has methods for profiles
-    
+   
 """
 
 import codecs
@@ -83,7 +79,7 @@ def calculate_dose(calibration, scan, phi0):
     dose : numpy array
         array containing the dose
     """
-    
+
     try:
         black = calibration["black"]
     except KeyError:
