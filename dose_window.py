@@ -28,8 +28,9 @@ SOFTWARE.
 ToDo:
 save advanced settings?
 
-click to select point
-click and drag for selection of area
+ideas:
+    click and drag for selection of area
+    or click and drag moves center for new input style, and area selection for old
 
 """
 
@@ -79,6 +80,11 @@ def gauss(x, A, x0, sigma, offset):
 def cross(x,y,width,height):
     "returns a matplotlib artist the shape of a cross"
     return "blubb"
+
+
+
+
+
 
 class doseWindow(QtGui.QMainWindow):
     """This class displays a dose distribution in a matplotlib plot and provides
@@ -159,6 +165,7 @@ class doseWindow(QtGui.QMainWindow):
         self.ui.actionAdvanced_settings.triggered.connect(self.change_adv_settings)
         #value changes
         self.ui.xCenter.valueChanged.connect(self.ROI_value_change)
+#        self.ui.xCenter.focusInEvent.connect(self.connect_click)
         self.ui.yCenter.valueChanged.connect(self.ROI_value_change)
         self.ui.width.valueChanged.connect(self.ROI_value_change)
         self.ui.height.valueChanged.connect(self.ROI_value_change)
@@ -169,6 +176,7 @@ class doseWindow(QtGui.QMainWindow):
         self.ui.y0.valueChanged.connect(self.ROI_value_change)
         self.ui.y1.valueChanged.connect(self.ROI_value_change)
 
+        QtGui.qApp.focusChanged.connect(self.focus_change)
         
         #buttons
         self.ui.alternateSpecToggle.stateChanged.connect(self.toggle_ROI_spec)
@@ -183,7 +191,8 @@ class doseWindow(QtGui.QMainWindow):
 
         #read the settings file
         self.load_settings() 
-        
+       
+       
 ##############################################################################
 # setup and close methods for the window
     #redefining close event
@@ -410,7 +419,9 @@ class doseWindow(QtGui.QMainWindow):
         artist = Ellipse((self.ui.xCenter.value(),self.ui.yCenter.value()),
                          self.ui.width.value(),self.ui.height.value(),
                          angle=-self.ui.angle.value(),
-                         color=self.settings["area stat linecolor"],fill=False)
+                         color=self.settings["area stat linecolor"],
+                         linewidth=self.settings["area stat linewidth"],
+                         fill=False)
         return artist
     
     def line_marker(self):
@@ -420,7 +431,8 @@ class doseWindow(QtGui.QMainWindow):
         #use the convieniently already calculated old style coordinates for the line
         artist = Line2D([self.ui.x0.value(),self.ui.x1.value()],
                         [self.ui.y0.value(),self.ui.y1.value()],
-                        color=self.settings["area stat linecolor"])
+                        color=self.settings["area stat linecolor"],
+                        linewidth=self.settings["area stat linewidth"])
         return artist
 
     def no_marker(self):
@@ -445,7 +457,9 @@ class doseWindow(QtGui.QMainWindow):
                            self.ui.width.value(),
                            self.ui.height.value(),
                            angle=-self.ui.angle.value(),
-                           color=self.settings["area stat linecolor"],fill=False)
+                           color=self.settings["area stat linecolor"],
+                           linewidth=self.settings["area stat linewidth"],
+                           fill=False)
         return artist
 
 ##############################################################################
@@ -671,10 +685,48 @@ class doseWindow(QtGui.QMainWindow):
                 logging.debug("excepted: "+e.message)
 
         self.canvas.draw()                
+
+    #three callbacks to connect to matplotlib button press events
+    #they put the click coordinates into the input fields
+    def click_to_center(self, event):
+        if self.toolbar.mode == "" and event.inaxes != None:
+            self.ui.xCenter.setValue(event.xdata)
+            self.ui.yCenter.setValue(event.ydata)
+
+    def click_to_pos0(self, event):
+        if self.toolbar.mode == "" and event.inaxes != None:
+            self.ui.x0.setValue(event.xdata)
+            self.ui.y0.setValue(event.ydata)
+
+    def click_to_pos1(self, event):
+        if self.toolbar.mode == "" and event.inaxes != None:
+            self.ui.x1.setValue(event.xdata)
+            self.ui.y1.setValue(event.ydata)
         
     def change_adv_settings(self):
         self.advSettings.change_settings()
         self.settings = self.advSettings.get_settings()
+
+    #catch if the focus leaves or enters a certain widget and connect matplotlib
+    #button press callbacks accordingly
+    def focus_change(self, old, new):
+        
+        if (old == self.ui.xCenter or old == self.ui.yCenter or 
+            old == self.ui.x0 or old == self.ui.y0 or 
+            old == self.ui.x1 or old == self.ui.y1):
+            self.canvas.mpl_disconnect(self.cid) 
+             
+        
+        if new == self.ui.xCenter or new == self.ui.yCenter:
+            self.cid = self.canvas.mpl_connect('button_press_event', 
+                                               self.click_to_center)
+        elif new == self.ui.x0 or new == self.ui.y0:
+            self.cid = self.canvas.mpl_connect('button_press_event', 
+                                               self.click_to_pos0)
+        elif new == self.ui.x1 or new == self.ui.y1:
+            self.cid = self.canvas.mpl_connect('button_press_event', 
+                                               self.click_to_pos1) 
+
 
     def refresh(self):
         self.update_dose_plot()
