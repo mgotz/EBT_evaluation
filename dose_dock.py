@@ -66,7 +66,7 @@ from GUI_tools import easy_edit_settings, simple_plot_window
 import fit_tools
 
 #load qt design UI
-from UI.DoseWindowUI import Ui_doseWindow
+from UI.DoseDockUI import Ui_DoseDock
 
 from dose_calc_core import dose_array
 
@@ -86,7 +86,7 @@ def cross(x,y,width,height):
 
 
 
-class doseWindow(QtGui.QMainWindow):
+class doseDock(QtGui.QDockWidget):
     """This class displays a dose distribution in a matplotlib plot and provides
         several ways to perform calculations and fits on that dose distribution
     """
@@ -95,14 +95,14 @@ class doseWindow(QtGui.QMainWindow):
             Constructor
         """
 
-        QtGui.QMainWindow.__init__(self)
+        QtGui.QDockWidget.__init__(self)
         
         #save local copy of dose and DPI                    
         self.doseDistribution = doseDistribution
 #        self.DPC = DPI/2.54
 
         # Set up the user interface from Designer.
-        self.ui =  Ui_doseWindow()
+        self.ui =  Ui_DoseDock()
         self.ui.setupUi(self)
         
         #define possibilities for color maps and check their availability on 
@@ -124,7 +124,6 @@ class doseWindow(QtGui.QMainWindow):
         self.settings = self.advSettings.get_settings()               
         
         self.set_ui_limits()
-        self.ui
         
         
         
@@ -162,10 +161,10 @@ class doseWindow(QtGui.QMainWindow):
 
         #connect slots
         #menu items
-        self.ui.actionAdvanced_settings.triggered.connect(self.change_adv_settings)
+#        self.ui.actionAdvanced_settings.triggered.connect(self.change_adv_settings)
+        self.ui.advSettings.clicked.connect(self.change_adv_settings)
         #value changes
         self.ui.xCenter.valueChanged.connect(self.ROI_value_change)
-#        self.ui.xCenter.focusInEvent.connect(self.connect_click)
         self.ui.yCenter.valueChanged.connect(self.ROI_value_change)
         self.ui.width.valueChanged.connect(self.ROI_value_change)
         self.ui.height.valueChanged.connect(self.ROI_value_change)
@@ -798,7 +797,8 @@ def run():
     
     
     app = QtGui.QApplication(sys.argv)
-    gui = doseWindow(dose)
+    gui = QtGui.QMainWindow()
+    gui.addDockWidget(QtCore.Qt.BottomDockWidgetArea,doseDock(dose))
     gui.show()
     sys.exit(app.exec_())
 

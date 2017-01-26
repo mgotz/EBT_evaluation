@@ -86,7 +86,7 @@ from UI.myNavigationToolbar import myNavigationToolbar
 #module with the dose calculation routines
 from dose_calc_core import load_calibrations, dose_array
 #the dose display window
-from dose_window import doseWindow
+from dose_dock import doseDock
         
 from UI.FilmScanMainUI import Ui_MainWindow
 
@@ -111,6 +111,8 @@ class MainGui(QtGui.QMainWindow):
         # Set up the user interface from Designer.
         self.ui =  Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.centralwidget.hide()
+        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
         
         #add the logging window by Andreas
         self.log_dock = Log.Log(datefmt=" ",infoString=False)
@@ -137,6 +139,7 @@ class MainGui(QtGui.QMainWindow):
         #menu items
         self.ui.actionShow_Log.triggered.connect(self.show_log)
         self.ui.actionShow_Settings.triggered.connect(self.show_settings)
+        self.ui.actionShow_Scan.triggered.connect(self.show_scan)
         self.ui.actionAdvanced_Settings.triggered.connect(self.change_advSettings) 
         #value changes
         self.ui.x0.valueChanged.connect(self.selection_changed)
@@ -353,8 +356,9 @@ class MainGui(QtGui.QMainWindow):
                                                      self.ui.x0.value():self.ui.x1.value(),
                                                      :],
                                           self.ui.phi0.value())
-            self.doseWindow = doseWindow(doseDistribution)
-            self.doseWindow.show()
+            self.addDockWidget(QtCore.Qt.TopDockWidgetArea,doseDock(doseDistribution))
+#            self.doseWindow = doseWindow(doseDistribution)
+#            self.doseWindow.show()
         except ValueError as e:
             logging.error("dose calculation failed: "+e.message)
         except KeyError as e:
@@ -386,7 +390,9 @@ class MainGui(QtGui.QMainWindow):
 
     def show_settings(self):
         self.ui.settingsDock.setVisible(True)
-        
+
+    def show_scan(self):
+        self.ui.imageDock.setVisible(True)        
        
 
 ###############################################################################

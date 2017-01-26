@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'FilmScanMain_QtDesign.ui'
 #
-# Created: Thu May 05 19:21:05 2016
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Thu Jan 26 16:42:39 2017
+#      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -28,15 +28,16 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
         MainWindow.resize(768, 659)
         self.centralwidget = QtGui.QWidget(MainWindow)
+        self.centralwidget.setMinimumSize(QtCore.QSize(0, 0))
+        self.centralwidget.setMaximumSize(QtCore.QSize(0, 0))
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.horizontalLayout_5 = QtGui.QHBoxLayout(self.centralwidget)
+        self.horizontalLayout_5.setSpacing(0)
+        self.horizontalLayout_5.setMargin(0)
         self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
-        self.imageLayout = QtGui.QVBoxLayout()
-        self.imageLayout.setObjectName(_fromUtf8("imageLayout"))
-        self.horizontalLayout_5.addLayout(self.imageLayout)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 768, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 768, 19))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuMenu = QtGui.QMenu(self.menubar)
         self.menuMenu.setObjectName(_fromUtf8("menuMenu"))
@@ -44,6 +45,22 @@ class Ui_MainWindow(object):
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
+        self.imageDock = QtGui.QDockWidget(MainWindow)
+        self.imageDock.setObjectName(_fromUtf8("imageDock"))
+        self.imageDock_contents = QtGui.QWidget()
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.imageDock_contents.sizePolicy().hasHeightForWidth())
+        self.imageDock_contents.setSizePolicy(sizePolicy)
+        self.imageDock_contents.setObjectName(_fromUtf8("imageDock_contents"))
+        self.verticalLayout_2 = QtGui.QVBoxLayout(self.imageDock_contents)
+        self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.imageLayout = QtGui.QVBoxLayout()
+        self.imageLayout.setObjectName(_fromUtf8("imageLayout"))
+        self.verticalLayout_2.addLayout(self.imageLayout)
+        self.imageDock.setWidget(self.imageDock_contents)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(4), self.imageDock)
         self.settingsDock = QtGui.QDockWidget(MainWindow)
         self.settingsDock.setObjectName(_fromUtf8("settingsDock"))
         self.dockWidgetContents = QtGui.QWidget()
@@ -185,7 +202,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addWidget(self.showDose_button)
         self.verticalLayout_3.addLayout(self.verticalLayout_4)
         self.settingsDock.setWidget(self.dockWidgetContents)
-        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.settingsDock)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(4), self.settingsDock)
         self.actionClose = QtGui.QAction(MainWindow)
         self.actionClose.setObjectName(_fromUtf8("actionClose"))
         self.actionAdvanced_Settings = QtGui.QAction(MainWindow)
@@ -194,8 +211,11 @@ class Ui_MainWindow(object):
         self.actionShow_Settings.setObjectName(_fromUtf8("actionShow_Settings"))
         self.actionShow_Log = QtGui.QAction(MainWindow)
         self.actionShow_Log.setObjectName(_fromUtf8("actionShow_Log"))
+        self.actionShow_Scan = QtGui.QAction(MainWindow)
+        self.actionShow_Scan.setObjectName(_fromUtf8("actionShow_Scan"))
         self.menuMenu.addAction(self.actionShow_Settings)
         self.menuMenu.addAction(self.actionShow_Log)
+        self.menuMenu.addAction(self.actionShow_Scan)
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionAdvanced_Settings)
         self.menuMenu.addSeparator()
@@ -247,4 +267,5 @@ class Ui_MainWindow(object):
         self.actionAdvanced_Settings.setText(_translate("MainWindow", "Advanced Settings", None))
         self.actionShow_Settings.setText(_translate("MainWindow", "Show Settings", None))
         self.actionShow_Log.setText(_translate("MainWindow", "Show Log", None))
+        self.actionShow_Scan.setText(_translate("MainWindow", "Show Scan", None))
 

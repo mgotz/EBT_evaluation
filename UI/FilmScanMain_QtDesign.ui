@@ -14,10 +14,25 @@
    <string>Film Auswertung</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout_5">
-    <item>
-     <layout class="QVBoxLayout" name="imageLayout"/>
-    </item>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -26,7 +41,7 @@
      <x>0</x>
      <y>0</y>
      <width>768</width>
-     <height>21</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMenu">
@@ -35,6 +50,7 @@
     </property>
     <addaction name="actionShow_Settings"/>
     <addaction name="actionShow_Log"/>
+    <addaction name="actionShow_Scan"/>
     <addaction name="separator"/>
     <addaction name="actionAdvanced_Settings"/>
     <addaction name="separator"/>
@@ -43,9 +59,27 @@
    <addaction name="menuMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="imageDock">
+   <attribute name="dockWidgetArea">
+    <number>4</number>
+   </attribute>
+   <widget class="QWidget" name="imageDock_contents">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <layout class="QVBoxLayout" name="imageLayout"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <widget class="QDockWidget" name="settingsDock">
    <attribute name="dockWidgetArea">
-    <number>2</number>
+    <number>4</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -389,6 +423,11 @@
   <action name="actionShow_Log">
    <property name="text">
     <string>Show Log</string>
+   </property>
+  </action>
+  <action name="actionShow_Scan">
+   <property name="text">
+    <string>Show Scan</string>
    </property>
   </action>
  </widget>
