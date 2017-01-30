@@ -63,6 +63,7 @@ API_NAMES = ["QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", "Q
 API_VERSION = 2
 for name in API_NAMES:
     sip.setapi(name, API_VERSION)
+    
 from PyQt4 import QtCore, QtGui
 
 
@@ -190,8 +191,10 @@ class MainGui(QtGui.QMainWindow):
 
         #load window settings        
         self.QtSettings.beginGroup("MainWindow")
-        self.resize(self.QtSettings.value("windowSize",QtCore.QSize(1024,1280),
-                                            type=QtCore.QSize))
+        self.restoreGeometry(self.QtSettings.value("geometry",QtCore.QByteArray(),type=QtCore.QByteArray))
+        self.restoreState(self.QtSettings.value("state",QtCore.QByteArray(),type=QtCore.QByteArray))
+#        self.resize(self.QtSettings.value("windowSize",QtCore.QSize(1024,1280),
+#                                            type=QtCore.QSize))
         self.QtSettings.endGroup()        
 
         #load values for various elements        
@@ -202,7 +205,8 @@ class MainGui(QtGui.QMainWindow):
     def save_settings(self):
         #save window settings
         self.QtSettings.beginGroup("MainWindow")
-        self.QtSettings.setValue("windowSize",self.size())
+        self.QtSettings.setValue("geometry",self.saveGeometry())
+        self.QtSettings.setValue("stat",self.saveState())
         self.QtSettings.endGroup()
         
         #save element content
