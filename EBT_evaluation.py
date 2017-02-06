@@ -29,7 +29,8 @@ and that dose distrubtion is than displayed in a seperate window
 
 
 next steps:
-(add tooltips to buttons) done?
+    advanced dose window settings
+    
 
 
 calibration location into advanced settings:
@@ -87,7 +88,7 @@ from UI.myNavigationToolbar import myNavigationToolbar
 #module with the dose calculation routines
 from dose_calc_core import load_calibrations, dose_array
 #the dose display window
-from dose_dock import doseDock
+from dose_widget import doseWidget
         
 from UI.FilmScanMainUI import Ui_MainWindow
 
@@ -112,7 +113,6 @@ class MainGui(QtGui.QMainWindow):
         # Set up the user interface from Designer.
         self.ui =  Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.centralwidget.hide()
         self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
         
         #add the logging window by Andreas
@@ -128,7 +128,7 @@ class MainGui(QtGui.QMainWindow):
         #convert settings to a dictionary for easier access                    
         self.settings = self.advSettings.get_settings()                   
                  
-        
+        self.tabCounter = 0
       
         
         #matplotlib frame setup
@@ -139,7 +139,6 @@ class MainGui(QtGui.QMainWindow):
         #connect slots
         #menu items
         self.ui.actionShow_Log.triggered.connect(self.show_log)
-        self.ui.actionShow_Settings.triggered.connect(self.show_settings)
         self.ui.actionShow_Scan.triggered.connect(self.show_scan)
         self.ui.actionAdvanced_Settings.triggered.connect(self.change_advSettings) 
         #value changes
@@ -155,6 +154,7 @@ class MainGui(QtGui.QMainWindow):
         self.ui.showDose_button.clicked.connect(self.show_dose)    
         self.ui.calcStatsButton.clicked.connect(self.area_stats)
         self.ui.showHistoButton.clicked.connect(self.histogram)
+        self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
         
         #read the settings file
         self.load_settings() 
@@ -259,7 +259,10 @@ class MainGui(QtGui.QMainWindow):
     def change_advSettings(self):
         self.advSettings.change_settings()
         self.settings = self.advSettings.get_settings()
-
+        
+    def close_tab(self, index):
+        self.ui.tabWidget.removeTab(index)
+        
     def histogram(self):
         #show a histgram of the selected channel
         channel = self.ui.channel_selection.itemData(self.ui.channel_selection.currentIndex())
@@ -360,9 +363,9 @@ class MainGui(QtGui.QMainWindow):
                                                      self.ui.x0.value():self.ui.x1.value(),
                                                      :],
                                           self.ui.phi0.value())
-            self.addDockWidget(QtCore.Qt.TopDockWidgetArea,doseDock(doseDistribution))
-#            self.doseWindow = doseWindow(doseDistribution)
-#            self.doseWindow.show()
+            self.tabCounter += 1  
+            index = self.ui.tabWidget.addTab(doseWidget(doseDistribution),"dose view {:d}".format(self.tabCounter))
+            self.ui.tabWidget.setCurrentIndex(index)
         except ValueError as e:
             logging.error("dose calculation failed: "+e.message)
         except KeyError as e:
@@ -392,11 +395,12 @@ class MainGui(QtGui.QMainWindow):
     def show_log(self):
         self.log_dock.setVisible(True)  
 
-    def show_settings(self):
-        self.ui.settingsDock.setVisible(True)
-
     def show_scan(self):
-        self.ui.imageDock.setVisible(True)        
+        if self.ui.tabWidget.tabText(0) == "load scan":
+            self.ui.tabWidget.setCurrentIndex(0)
+        else:
+            self.ui.tabWidget.insertTab(0,self.ui.scanTab,"load scan")
+      
        
 
 ###############################################################################
