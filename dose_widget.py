@@ -80,16 +80,30 @@ def cross(x,y,width,height):
     "returns a matplotlib artist the shape of a cross"
     return "blubb"
 
+#define possibilities for color maps and check their availability on 
+#the current installation
+colorMapChoices = ["inferno","hot","gnuplot","spectral","gray","seismic"]
 
+for cmap in colorMapChoices:
+    if cmap not in colormaps():
+        colorMapChoices.remove(cmap)
 
+_advSettings = easy_edit_settings([("area stat linecolor","red"),
+                                   ("area stat linewidth",2.0),
+                                   ("label axes",True), 
+                                   ("color map",[0]+colorMapChoices),
+                                   ("show grid",False),
+                                   ("profile interpolation",
+                                    [0,"nearest","linear","spline"])])
 
+_defaultSettings = _advSettings.get_settings()
 
 
 class doseWidget(QtGui.QWidget):
     """This class displays a dose distribution in a matplotlib plot and provides
         several ways to perform calculations and fits on that dose distribution
     """
-    def __init__(self, doseDistribution):
+    def __init__(self, doseDistribution, settings=_defaultSettings):
         """
             Constructor
         """
@@ -103,24 +117,8 @@ class doseWidget(QtGui.QWidget):
         # Set up the user interface from Designer.
         self.ui =  Ui_DoseWidget()
         self.ui.setupUi(self)
-        
-        #define possibilities for color maps and check their availability on 
-        #the current installation
-        colorMapChoices = ["inferno","hot","gnuplot","spectral","gray","seismic"]
-        
-        for cmap in colorMapChoices:
-            if cmap not in colormaps():
-                colorMapChoices.remove(cmap)
-        #initialize the advanced settings (editable via formlayout, thus the list of tuples)
-        self.advSettings = easy_edit_settings([("area stat linecolor","red"),
-                                               ("area stat linewidth",2.0),
-                                               ("label axes",True), 
-                                               ("color map",[0]+colorMapChoices),
-                                               ("show grid",False),
-                                               ("profile interpolation",
-                                                [0,"nearest","linear","spline"])])
-                                                             
-        self.settings = self.advSettings.get_settings()               
+
+        self.settings = settings               
         
         self.set_ui_limits()
         
@@ -180,14 +178,13 @@ class doseWidget(QtGui.QWidget):
         self.ui.exportTxtButton.clicked.connect(self.save_as_txt)
         self.ui.exportNpButton.clicked.connect(self.save_as_numpy)
         self.ui.clearFitButton.clicked.connect(self.clear_2D_fit)
-        self.ui.advSettings.clicked.connect(self.change_adv_settings)
         
         #initialize some variables
         self.savePath = ""
        
        
 ##############################################################################
-# setup and close methods for the window
+# setup methods for the window and update settings
     def create_mplframe(self):
         """creates the matplotlib canvas and figure with colorbar
         """
@@ -238,7 +235,12 @@ class doseWidget(QtGui.QWidget):
         self.ui.x1.setMaximum(xMax)
         self.ui.y0.setMaximum(yMax)
         self.ui.y1.setMaximum(yMax)
-        
+
+    def set_settings(self, settings):
+        self.settings = settings
+
+    def get_settings(self):
+        return self.settings        
 ##############################################################################
 # UI update methods
     def match_ui_inputs(self,newIsMaster=True):
@@ -673,10 +675,6 @@ class doseWidget(QtGui.QWidget):
         if self.toolbar.mode == "" and event.inaxes != None:
             self.ui.x1.setValue(event.xdata)
             self.ui.y1.setValue(event.ydata)
-        
-    def change_adv_settings(self):
-        self.advSettings.change_settings()
-        self.settings = self.advSettings.get_settings()
 
     #catch if the focus leaves or enters a certain widget and connect matplotlib
     #button press callbacks accordingly

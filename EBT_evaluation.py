@@ -27,12 +27,6 @@ A scannend image can be loaded and an area of interest selected
 From that area a dose distrubtion can be calculated using a calibration file
 and that dose distrubtion is than displayed in a seperate window
 
-
-next steps:
-    advanced dose window settings
-    
-
-
 calibration location into advanced settings:
     change must trigger reload
     load adv settings before loading calibration
@@ -88,7 +82,7 @@ from UI.myNavigationToolbar import myNavigationToolbar
 #module with the dose calculation routines
 from dose_calc_core import load_calibrations, dose_array
 #the dose display window
-from dose_widget import doseWidget
+from dose_widget import doseWidget, _advSettings
         
 from UI.FilmScanMainUI import Ui_MainWindow
 
@@ -127,7 +121,9 @@ class MainGui(QtGui.QMainWindow):
         self.advSettings = easy_edit_settings(settingsList)
         #convert settings to a dictionary for easier access                    
         self.settings = self.advSettings.get_settings()                   
-                 
+        
+        self.doseViewSettings = _advSettings        
+         
         self.tabCounter = 0
       
         
@@ -140,7 +136,8 @@ class MainGui(QtGui.QMainWindow):
         #menu items
         self.ui.actionShow_Log.triggered.connect(self.show_log)
         self.ui.actionShow_Scan.triggered.connect(self.show_scan)
-        self.ui.actionAdvanced_Settings.triggered.connect(self.change_advSettings) 
+        self.ui.actionScan_View_Settings.triggered.connect(self.change_advSettings)
+        self.ui.actionDose_View_Settings.triggered.connect(self.change_doseViewSettings)
         #value changes
         self.ui.x0.valueChanged.connect(self.selection_changed)
         self.ui.x1.valueChanged.connect(self.selection_changed)
@@ -259,6 +256,14 @@ class MainGui(QtGui.QMainWindow):
     def change_advSettings(self):
         self.advSettings.change_settings()
         self.settings = self.advSettings.get_settings()
+    
+    def change_doseViewSettings(self):
+        self.doseViewSettings.change_settings()
+        tabs = self.ui.tabWidget.count()
+        for i in range(0,tabs):
+            if self.ui.tabWidget.tabText(i) != "scan view":
+                widget = self.ui.tabWidget.widget(i)
+                widget.set_settings(self.doseViewSettings.get_settings())
         
     def close_tab(self, index):
         self.ui.tabWidget.removeTab(index)
@@ -364,8 +369,10 @@ class MainGui(QtGui.QMainWindow):
                                                      :],
                                           self.ui.phi0.value())
             self.tabCounter += 1  
-            index = self.ui.tabWidget.addTab(doseWidget(doseDistribution),"dose view {:d}".format(self.tabCounter))
+            index = self.ui.tabWidget.addTab(doseWidget(doseDistribution,settings=self.doseViewSettings.get_settings()),
+                                             "dose view {:d}".format(self.tabCounter))
             self.ui.tabWidget.setCurrentIndex(index)
+
         except ValueError as e:
             logging.error("dose calculation failed: "+e.message)
         except KeyError as e:
@@ -396,10 +403,10 @@ class MainGui(QtGui.QMainWindow):
         self.log_dock.setVisible(True)  
 
     def show_scan(self):
-        if self.ui.tabWidget.tabText(0) == "load scan":
+        if self.ui.tabWidget.tabText(0) == "scan view":
             self.ui.tabWidget.setCurrentIndex(0)
         else:
-            self.ui.tabWidget.insertTab(0,self.ui.scanTab,"load scan")
+            self.ui.tabWidget.insertTab(0,self.ui.scanTab,"scan view")
       
        
 

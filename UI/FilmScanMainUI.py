@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'FilmScanMain_QtDesign.ui'
 #
-# Created: Mon Feb 06 16:59:26 2017
+# Created: Tue Feb 07 21:17:09 2017
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -197,16 +197,19 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.actionClose = QtGui.QAction(MainWindow)
         self.actionClose.setObjectName(_fromUtf8("actionClose"))
-        self.actionAdvanced_Settings = QtGui.QAction(MainWindow)
-        self.actionAdvanced_Settings.setObjectName(_fromUtf8("actionAdvanced_Settings"))
+        self.actionScan_View_Settings = QtGui.QAction(MainWindow)
+        self.actionScan_View_Settings.setObjectName(_fromUtf8("actionScan_View_Settings"))
         self.actionShow_Scan = QtGui.QAction(MainWindow)
         self.actionShow_Scan.setObjectName(_fromUtf8("actionShow_Scan"))
         self.actionShow_Log = QtGui.QAction(MainWindow)
         self.actionShow_Log.setObjectName(_fromUtf8("actionShow_Log"))
+        self.actionDose_View_Settings = QtGui.QAction(MainWindow)
+        self.actionDose_View_Settings.setObjectName(_fromUtf8("actionDose_View_Settings"))
         self.menuMenu.addAction(self.actionShow_Scan)
         self.menuMenu.addAction(self.actionShow_Log)
         self.menuMenu.addSeparator()
-        self.menuMenu.addAction(self.actionAdvanced_Settings)
+        self.menuMenu.addAction(self.actionScan_View_Settings)
+        self.menuMenu.addAction(self.actionDose_View_Settings)
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionClose)
         self.menubar.addAction(self.menuMenu.menuAction())
@@ -252,10 +255,11 @@ class Ui_MainWindow(object):
         self.phi0.setToolTip(_translate("MainWindow", "give the pixel value that corresponds to 0 dose, in order to calculate the optical density", None))
         self.showDose_button.setToolTip(_translate("MainWindow", "calculate the dose for the selected area", None))
         self.showDose_button.setText(_translate("MainWindow", "show dose", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.scanTab), _translate("MainWindow", "load scan", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.scanTab), _translate("MainWindow", "scan view", None))
         self.menuMenu.setTitle(_translate("MainWindow", "Menu", None))
         self.actionClose.setText(_translate("MainWindow", "Close", None))
-        self.actionAdvanced_Settings.setText(_translate("MainWindow", "Advanced Settings", None))
+        self.actionScan_View_Settings.setText(_translate("MainWindow", "Scan View Setting", None))
         self.actionShow_Scan.setText(_translate("MainWindow", "Show Scan Tab", None))
         self.actionShow_Log.setText(_translate("MainWindow", "Show Log", None))
+        self.actionDose_View_Settings.setText(_translate("MainWindow", "Dose View Settings", None))
 

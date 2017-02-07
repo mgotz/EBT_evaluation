@@ -25,7 +25,7 @@
       </property>
       <widget class="QWidget" name="scanTab">
        <attribute name="title">
-        <string>load scan</string>
+        <string>scan view</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
@@ -379,7 +379,8 @@
     <addaction name="actionShow_Scan"/>
     <addaction name="actionShow_Log"/>
     <addaction name="separator"/>
-    <addaction name="actionAdvanced_Settings"/>
+    <addaction name="actionScan_View_Settings"/>
+    <addaction name="actionDose_View_Settings"/>
     <addaction name="separator"/>
     <addaction name="actionClose"/>
    </widget>
@@ -391,9 +392,9 @@
     <string>Close</string>
    </property>
   </action>
-  <action name="actionAdvanced_Settings">
+  <action name="actionScan_View_Settings">
    <property name="text">
-    <string>Advanced Settings</string>
+    <string>Scan View Setting</string>
    </property>
   </action>
   <action name="actionShow_Scan">
@@ -404,6 +405,11 @@
   <action name="actionShow_Log">
    <property name="text">
     <string>Show Log</string>
+   </property>
+  </action>
+  <action name="actionDose_View_Settings">
+   <property name="text">
+    <string>Dose View Settings</string>
    </property>
   </action>
  </widget>

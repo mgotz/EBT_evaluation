@@ -13,7 +13,7 @@ import os.path as pathTools
 from matplotlib.backends.backend_qt4agg \
   import NavigationToolbar2QT
 from matplotlib import rcParams as mplParams  
-
+from PyQt4 import QtGui
 
 from matplotlib.backend_tools import Cursors
 cursors = Cursors()
@@ -24,17 +24,16 @@ class myNavigationToolbar(NavigationToolbar2QT):
        selection is changed
     """
     
-    #remove unwanted items from the toolbar
-    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] not in ('Subplots', 'Save')]
-    #create a path of the selection icon relative to where qt5 backend looks
-    try:
-        iconPath = pathTools.relpath(pathTools.join(pathTools.curdir,"UI","select_icon"),
-                                     start=pathTools.join(mplParams["datapath"],'images'))
-    #on windows a relative path from e.g. c: to d: is not possible, so no path
-    #can be constructed this way and no icon will be used                                     
-    except ValueError:
-        iconPath = "select_icon"
-
+    toolitems =[]
+    #remove unwanted items from the toolbar and make image names into paths
+    for text, tooltip_text, image_file, callback in NavigationToolbar2QT.toolitems:
+        if text not in ('Subplots', 'Save',None):
+            toolitems.append((text, tooltip_text, pathTools.join(mplParams["datapath"],'images',image_file),callback))
+        elif text is None:
+            toolitems.append((text, tooltip_text, image_file,callback))
+    
+    #create a path of the selection icon 
+    iconPath = pathTools.abspath(pathTools.join(pathTools.curdir,"UI","select_icon"))
     #add selection icon and seperator in front of other icons
     toolitems = [("Select","make a slection",iconPath,"select"),(None,None,None,None)]+toolitems
     
@@ -47,6 +46,11 @@ class myNavigationToolbar(NavigationToolbar2QT):
        
         self._ids_selection = []
         self.currentSelection = (0,0,0,0)
+   
+   
+    #overwrite to remove the joining of paths
+    def _icon(self, fullPath):
+        return QtGui.QIcon(fullPath)   
    
     #pretty much a copy of the zoom method from backend_bases
     def select(self):

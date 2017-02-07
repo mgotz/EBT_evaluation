@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'DoseWidget_QtDesign.ui'
 #
-# Created: Mon Feb 06 17:12:34 2017
+# Created: Tue Feb 07 21:17:23 2017
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -202,13 +202,27 @@ class Ui_DoseWidget(object):
         self.exportNpButton.setObjectName(_fromUtf8("exportNpButton"))
         self.horizontalLayout_5.addWidget(self.exportNpButton)
         self.verticalLayout_2.addLayout(self.horizontalLayout_5)
-        self.advSettings = QtGui.QPushButton(self.layoutWidget)
-        self.advSettings.setObjectName(_fromUtf8("advSettings"))
-        self.verticalLayout_2.addWidget(self.advSettings)
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
 
         self.retranslateUi(DoseWidget)
         QtCore.QMetaObject.connectSlotsByName(DoseWidget)
+        DoseWidget.setTabOrder(self.doseMin, self.doseMax)
+        DoseWidget.setTabOrder(self.doseMax, self.refreshButton)
+        DoseWidget.setTabOrder(self.refreshButton, self.evalFunction)
+        DoseWidget.setTabOrder(self.evalFunction, self.xCenter)
+        DoseWidget.setTabOrder(self.xCenter, self.yCenter)
+        DoseWidget.setTabOrder(self.yCenter, self.width)
+        DoseWidget.setTabOrder(self.width, self.height)
+        DoseWidget.setTabOrder(self.height, self.angle)
+        DoseWidget.setTabOrder(self.angle, self.alternateSpecToggle)
+        DoseWidget.setTabOrder(self.alternateSpecToggle, self.x0)
+        DoseWidget.setTabOrder(self.x0, self.y0)
+        DoseWidget.setTabOrder(self.y0, self.x1)
+        DoseWidget.setTabOrder(self.x1, self.y1)
+        DoseWidget.setTabOrder(self.y1, self.calculateButton)
+        DoseWidget.setTabOrder(self.calculateButton, self.clearFitButton)
+        DoseWidget.setTabOrder(self.clearFitButton, self.exportTxtButton)
+        DoseWidget.setTabOrder(self.exportTxtButton, self.exportNpButton)
 
     def retranslateUi(self, DoseWidget):
         DoseWidget.setWindowTitle(_translate("DoseWidget", "Form", None))
@@ -240,5 +254,4 @@ class Ui_DoseWidget(object):
         self.exportTxtButton.setText(_translate("DoseWidget", "export as txt", None))
         self.exportNpButton.setToolTip(_translate("DoseWidget", "export the dose distribution into a npy file which can be loaded by numpy.load() in python (smaller than txt)", None))
         self.exportNpButton.setText(_translate("DoseWidget", "export as numpy", None))
-        self.advSettings.setText(_translate("DoseWidget", "advanced settings", None))
 

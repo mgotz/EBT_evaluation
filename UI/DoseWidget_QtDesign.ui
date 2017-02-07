@@ -407,19 +407,32 @@
          </item>
         </layout>
        </item>
-       <item>
-        <widget class="QPushButton" name="advSettings">
-         <property name="text">
-          <string>advanced settings</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
     </widget>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>doseMin</tabstop>
+  <tabstop>doseMax</tabstop>
+  <tabstop>refreshButton</tabstop>
+  <tabstop>evalFunction</tabstop>
+  <tabstop>xCenter</tabstop>
+  <tabstop>yCenter</tabstop>
+  <tabstop>width</tabstop>
+  <tabstop>height</tabstop>
+  <tabstop>angle</tabstop>
+  <tabstop>alternateSpecToggle</tabstop>
+  <tabstop>x0</tabstop>
+  <tabstop>y0</tabstop>
+  <tabstop>x1</tabstop>
+  <tabstop>y1</tabstop>
+  <tabstop>calculateButton</tabstop>
+  <tabstop>clearFitButton</tabstop>
+  <tabstop>exportTxtButton</tabstop>
+  <tabstop>exportNpButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
