@@ -42,7 +42,7 @@ import traceback
 import os
 
 #add the modules to the search path
-sys.path.append(os.path.join(sys.path[0],"Modules"))
+sys.path.append(os.path.join(sys.path[0],"common modules"))
 
 #standard modules
 import logging #logging funtionality
@@ -80,9 +80,9 @@ from GUI_tools import gui_save, gui_restore, simple_plot_window, easy_edit_setti
 #my custom toolbar
 from UI.myNavigationToolbar import myNavigationToolbar
 #module with the dose calculation routines
-from dose_calc_core import load_calibrations, dose_array
+from EBTtools.dose_calc_core import load_calibrations, dose_array
 #the dose display window
-from dose_widget import doseWidget, _advSettings
+from EBTtools.dose_widget import doseWidget, _advSettings
         
 from UI.FilmScanMainUI import Ui_MainWindow
 
@@ -254,11 +254,11 @@ class MainGui(QtGui.QMainWindow):
         logging.info("--------------------------------------------------------------")
         
     def change_advSettings(self):
-        self.advSettings.change_settings()
+        self.advSettings.change_settings(title="advanced scan settings")
         self.settings = self.advSettings.get_settings()
     
     def change_doseViewSettings(self):
-        self.doseViewSettings.change_settings()
+        self.doseViewSettings.change_settings(title="dose view settings")
         tabs = self.ui.tabWidget.count()
         for i in range(0,tabs):
             if self.ui.tabWidget.tabText(i) != "scan view":

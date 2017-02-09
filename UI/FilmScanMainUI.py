@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'FilmScanMain_QtDesign.ui'
 #
-# Created: Tue Feb 07 21:17:09 2017
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Thu Feb  9 13:29:35 2017
+#      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -69,11 +69,11 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addWidget(self.loadButton)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem)
-        self.horizontalLayout_4 = QtGui.QHBoxLayout()
-        self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
         self.label_5 = QtGui.QLabel(self.layoutWidget1)
         self.label_5.setObjectName(_fromUtf8("label_5"))
-        self.horizontalLayout_4.addWidget(self.label_5)
+        self.verticalLayout_4.addWidget(self.label_5)
+        self.verticalLayout = QtGui.QVBoxLayout()
+        self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.gridLayout_2 = QtGui.QGridLayout()
         self.gridLayout_2.setContentsMargins(0, 0, -1, -1)
         self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
@@ -105,8 +105,8 @@ class Ui_MainWindow(object):
         self.label_4 = QtGui.QLabel(self.layoutWidget1)
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.gridLayout_2.addWidget(self.label_4, 1, 3, 1, 1)
-        self.horizontalLayout_4.addLayout(self.gridLayout_2)
-        self.verticalLayout_4.addLayout(self.horizontalLayout_4)
+        self.verticalLayout.addLayout(self.gridLayout_2)
+        self.verticalLayout_4.addLayout(self.verticalLayout)
         spacerItem1 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem1)
         self.line_2 = QtGui.QFrame(self.layoutWidget1)
@@ -187,7 +187,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 852, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 852, 19))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuMenu = QtGui.QMenu(self.menubar)
         self.menuMenu.setObjectName(_fromUtf8("menuMenu"))
@@ -233,7 +233,7 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.phi0, self.showDose_button)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "Film Auswertung", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "EBT evaluation", None))
         self.label_7.setText(_translate("MainWindow", "scanned film:", None))
         self.browseImageButton.setText(_translate("MainWindow", "browse", None))
         self.loadButton.setText(_translate("MainWindow", "load image", None))
