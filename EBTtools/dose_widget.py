@@ -36,7 +36,9 @@ ideas:
 
 import logging
 import numpy as np
+import os
 import sys
+sys.path.append(os.path.join(sys.path[0],".."))
 from collections import OrderedDict
 
 #Qt stuff
@@ -57,6 +59,7 @@ from matplotlib.patches import Ellipse, Rectangle
 from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 import scipy.optimize as opt
+
 
 # simple edit of additional settings
 from GUI_tools import easy_edit_settings, simple_plot_window
@@ -154,7 +157,7 @@ class doseWidget(QtGui.QWidget):
         
         #matplotlib frame setup
         self.create_mplframe()
-        self.update_dose_plot()
+        self.make_dose_plot()
 
         #connect slots
         #value changes
@@ -308,8 +311,8 @@ class doseWidget(QtGui.QWidget):
             for element in elements:
                 element.blockSignals(False)
 
-    def update_dose_plot(self):
-        """update or draw the dose distribution in the plot
+    def make_dose_plot(self):
+        """draw the dose distribution in the plot
         """
         shape = self.doseDistribution.shape
         yMax = shape[0]/self.doseDistribution.DPC
@@ -318,18 +321,16 @@ class doseWidget(QtGui.QWidget):
         self.dosePlot = self.ax1.imshow(self.doseDistribution,
                                             interpolation="nearest",
                                             extent=[0,xMax,yMax,0])
-        
-        #set limits of the color map                    
-        self.dosePlot.set_clim(self.ui.doseMin.value(),
-                               self.ui.doseMax.value())
-        #set the colormap and add it to the plot
-        self.dosePlot.set_cmap(self.settings["color map"])
                     
-        Colorbar(self.clbAxes,self.dosePlot,orientation="vertical",
-                 format=ticker.FuncFormatter(gray_tick))
-        
-        
-        
+        self.clb = self.fig.colorbar(self.dosePlot, cax = self.clbAxes,
+                                     orientation="vertical", 
+                                     format=ticker.FuncFormatter(gray_tick))
+                                     
+#        Colorbar(self.clbAxes,self.dosePlot,orientation="vertical",
+#                            format=ticker.FuncFormatter(gray_tick))
+
+
+
         self.ax1.minorticks_on()
         for axis in ['top','bottom','left','right']:
             self.ax1.spines[axis].set_linewidth(2.0)
@@ -340,6 +341,22 @@ class doseWidget(QtGui.QWidget):
         self.ax1.tick_params(which='minor',direction="out",width=1.5,length=4,
                                  bottom=True,top=True,left=True,right=True)
         
+        self.update_dose_plot()
+            
+
+    def update_dose_plot(self):
+        """set limits and colormap of the dose plot
+        """
+
+        #set limits of the color map                    
+        self.dosePlot.set_clim(self.ui.doseMin.value(),
+                               self.ui.doseMax.value())
+        #set the colormap and add it to the plot
+        self.dosePlot.set_cmap(self.settings["color map"])
+
+        self.clb.update_normal(self.dosePlot)
+
+        #labels and grid
         if self.settings["label axes"]:
             self.ax1.set_xlabel("x-position in cm")
             self.ax1.set_ylabel("y-position in cm")
@@ -347,7 +364,7 @@ class doseWidget(QtGui.QWidget):
             self.ax1.set_xlabel("")
             self.ax1.set_ylabel("")
 
-        self.ax1.grid(self.settings["show grid"])            
+        self.ax1.grid(self.settings["show grid"])
 
     def update_marker(self):
         #try removing old marker, attribute error is raised when the variable is
@@ -770,11 +787,12 @@ class TestGUI(QtGui.QMainWindow):
         self.ui =  Ui_MainWindow()
         self.ui.setupUi(self) 
         
+        xDim = 4000 
+        yDim = 4000
         
-        
-        x,y = np.meshgrid(np.linspace(0,470,470),np.linspace(0,470,470))
+        x,y = np.meshgrid(np.linspace(0,xDim,yDim),np.linspace(0,xDim,yDim))
         dose = (5.0*np.exp(-np.divide(np.square(x-100),2*50**2)-np.divide(np.square(y-235),2*100**2))
-            +np.random.rand(470,470)*0.1)
+            +np.random.rand(xDim,yDim)*0.1)
     
         dose = dose.view(dose_array)
         widget = doseWidget(dose)
