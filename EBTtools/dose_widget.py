@@ -52,13 +52,12 @@ use("Qt4Agg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg \
   import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT
-from matplotlib.colorbar import Colorbar
 from matplotlib.pyplot import colormaps
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.patches import Ellipse, Rectangle
 from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
-import scipy.optimize as opt
+from scipy.optimize import curve_fit
 
 
 # simple edit of additional settings
@@ -85,7 +84,7 @@ def cross(x,y,width,height):
 
 #define possibilities for color maps and check their availability on 
 #the current installation
-colorMapChoices = ["inferno","hot","gnuplot","spectral","gray","seismic"]
+colorMapChoices = ["inferno","viridis","hot","gnuplot","spectral","gray","seismic"]
 
 for cmap in colorMapChoices:
     if cmap not in colormaps():
@@ -465,11 +464,11 @@ class doseWidget(QtGui.QWidget):
                                                       self.ui.angle.value())
         logging.debug(stats)                                              
         logging.info("### Statistics for rectangle ###")
-        logging.info("sum: {:.4e}".format(stats[0]))
-        logging.info("average: {:.4e}".format(stats[1]))
-        logging.info("standard deviation: {:.4e}".format(stats[2]))
-        logging.info("maximum: {:.4e}".format(stats[3]))        
-        logging.info("minimum: {:.4e}".format(stats[4]))
+        logging.info("sum: {:.4e} Gy*cm^2".format(stats[0]/self.doseDistribution.DPC**2))
+        logging.info("average: {:.4e} Gy".format(stats[1]))
+        logging.info("standard deviation: {:.4e} Gy".format(stats[2]))
+        logging.info("minimum: {:.4e} Gy".format(stats[3]))        
+        logging.info("maximum: {:.4e} Gy".format(stats[4]))
         logging.info("--------------------------------------------------------------")
         
 
@@ -483,13 +482,13 @@ class doseWidget(QtGui.QWidget):
                                                     self.ui.width.value()/2.0, 
                                                     self.ui.height.value()/2.0,
                                                     self.ui.angle.value())
-                                                    
+        print stats                                            
         logging.info("### Statistics for ellipse ###")
-        logging.info("sum: {:.4e}".format(stats[0]))
-        logging.info("average: {:.4e}".format(stats[1]))
-        logging.info("standard deviation: {:.4e}".format(stats[2]))
-        logging.info("maximum: {:.4e}".format(stats[3]))        
-        logging.info("minimum: {:.4e}".format(stats[4]))
+        logging.info("sum: {:.4e} Gy*cm^2".format(stats[0]/self.doseDistribution.DPC**2))
+        logging.info("average: {:.4e} Gy".format(stats[1]))
+        logging.info("standard deviation: {:.4e} Gy".format(stats[2]))
+        logging.info("minimum: {:.4e} Gy".format(stats[3]))        
+        logging.info("maximum: {:.4e} Gy".format(stats[4]))
         logging.info("--------------------------------------------------------------")
     
     def profile_with_parabola(self):
@@ -554,7 +553,7 @@ class doseWidget(QtGui.QWidget):
         logging.debug("Parameter guess: {:.4e}, {:.4e}, {:.4e}, {:.4e}".format(*p0))        
         
         #fit and plot function
-        p, cov, info, msg, success = opt.curve_fit(gauss,x,y,p0=p0, full_output=True)
+        p, cov, info, msg, success = curve_fit(gauss,x,y,p0=p0, full_output=True)
         
         if success != 1 and success != 2 and success != 3 and success !=4:
             logging.error("Fit failed with message: "+msg)
