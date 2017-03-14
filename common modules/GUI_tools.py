@@ -50,8 +50,8 @@ class easy_edit_settings():
     def get_settings(self):
         return self.settingsDict
         
-    def change_settings(self):
-        newSettings = fedit(self.settingsList, title="Edit advanced settings")
+    def change_settings(self, title="Edit advanced settings" ):
+        newSettings = fedit(self.settingsList, title=title)
         if newSettings != None:
             for i, newSetting in enumerate(newSettings):
                 if type(self.settingsList[i][1]) == list:
