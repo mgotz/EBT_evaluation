@@ -84,7 +84,8 @@ def cross(x,y,width,height):
 
 #define possibilities for color maps and check their availability on 
 #the current installation
-colorMapChoices = ["inferno","viridis","hot","gnuplot","spectral","gray","seismic"]
+colorMapChoices = ["inferno","viridis","hot","gnuplot","spectral","jet",
+                   "rainbow","gray","seismic"]
 
 for cmap in colorMapChoices:
     if cmap not in colormaps():
