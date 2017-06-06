@@ -15,6 +15,7 @@ import logging
 import numpy as np
 import os
 import scipy.ndimage
+from math import floor, ceil
 
 #define which array index corresponds to which color
 rgbMap = {"red":0,"green":1,"blue":2}
@@ -114,7 +115,7 @@ def calculate_dose(calibration, scan, phi0):
         channel = rgbMap[calibration["channel"]]
         #take the specified function of the given argument construction 
         #(usually net optical density) and clip values to max min.
-        dose = function(arg(np.clip(scan[:,:,channel],black,phi0)))
+        dose = function(arg(np.clip(scan[:,:,channel],int(ceil(black)),int(floor(phi0)))))
     elif calibration["channel"] in ["grey","gray"]:
         if  len(scan.shape) > 2:
             raise ValueError("calibration is for grey scale, but scan in multicolor")

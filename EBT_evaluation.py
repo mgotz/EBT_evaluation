@@ -307,6 +307,11 @@ class MainGui(QtGui.QMainWindow):
             logging.error("failed to open file: "+str(e))
             return ()
         
+        if not (img.mode == "RGB" or img.mode == "L"):
+            logging.warning("unsupported image mode "+img.mode+
+                            " (check pillow docs for details) "+
+                            "expected RGB or greyscale image, proceed with caution")
+        
         if self.settings["legacy mode"]:
             self.npImg = np.array(img)
         else:

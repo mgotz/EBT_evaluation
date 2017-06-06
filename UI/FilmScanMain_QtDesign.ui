@@ -329,15 +329,18 @@
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="phi0">
+               <widget class="QDoubleSpinBox" name="phi0">
                 <property name="toolTip">
-                 <string>give the pixel value that corresponds to 0 dose, in order to calculate the optical density</string>
+                 <string>give the pixel value that corresponds to 0 dose, in order to calculate the net optical density</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
+                <property name="decimals">
+                 <number>4</number>
+                </property>
                 <property name="maximum">
-                 <number>255</number>
+                 <double>255.000000000000000</double>
                 </property>
                </widget>
               </item>

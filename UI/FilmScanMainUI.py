@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'FilmScanMain_QtDesign.ui'
 #
-# Created: Thu Feb  9 13:29:35 2017
+# Created: Tue Jun  6 15:08:54 2017
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -173,9 +173,10 @@ class Ui_MainWindow(object):
         self.label_10 = QtGui.QLabel(self.layoutWidget1)
         self.label_10.setObjectName(_fromUtf8("label_10"))
         self.horizontalLayout_8.addWidget(self.label_10)
-        self.phi0 = QtGui.QSpinBox(self.layoutWidget1)
+        self.phi0 = QtGui.QDoubleSpinBox(self.layoutWidget1)
         self.phi0.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.phi0.setMaximum(255)
+        self.phi0.setDecimals(4)
+        self.phi0.setMaximum(255.0)
         self.phi0.setObjectName(_fromUtf8("phi0"))
         self.horizontalLayout_8.addWidget(self.phi0)
         self.verticalLayout_4.addLayout(self.horizontalLayout_8)
@@ -252,7 +253,7 @@ class Ui_MainWindow(object):
         self.label_8.setText(_translate("MainWindow", "DPI", None))
         self.DPI.setToolTip(_translate("MainWindow", "give the resolution of the image in dots per inch to calculate a cm scale", None))
         self.label_10.setText(_translate("MainWindow", "phi 0", None))
-        self.phi0.setToolTip(_translate("MainWindow", "give the pixel value that corresponds to 0 dose, in order to calculate the optical density", None))
+        self.phi0.setToolTip(_translate("MainWindow", "give the pixel value that corresponds to 0 dose, in order to calculate the net optical density", None))
         self.showDose_button.setToolTip(_translate("MainWindow", "calculate the dose for the selected area", None))
         self.showDose_button.setText(_translate("MainWindow", "show dose", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.scanTab), _translate("MainWindow", "scan view", None))
