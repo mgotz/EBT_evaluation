@@ -31,8 +31,6 @@ calibration location into advanced settings:
     change must trigger reload
     load adv settings before loading calibration
     load gui settings after
-    
-specify units in calib
 """
 #modules for exception handeling
 import sys
@@ -385,9 +383,6 @@ class MainGui(QtGui.QMainWindow):
         except Exception as e:
             logging.critical("unknown exception in dose calculation or dose display construction")
             logging.critical(traceback.format_exc())
-                                         
-        
-
        
 
     def toolbar_selection(self):
@@ -397,10 +392,6 @@ class MainGui(QtGui.QMainWindow):
         self.ui.y0.setValue(selection[1]) 
         self.ui.x1.setValue(selection[2]) 
         self.ui.y1.setValue(selection[3])         
-
-
-
-
                                       
 
     #to show docks again, if they were closed

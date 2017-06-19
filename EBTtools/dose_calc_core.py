@@ -70,6 +70,7 @@ def calculate_dose(calibration, scan, phi0):
     ----------
     calibration : dictionary
         describes the calibration with the keys: argument, p1, p2, p3, function and channel
+        optional keys are black and background
     scan : numpy array
         the scanned image or part thereof
     phi0 : scalar
@@ -81,22 +82,40 @@ def calculate_dose(calibration, scan, phi0):
         array containing the dose
     """
 
+        
     try:
         black = calibration["black"]
     except KeyError:
         black = 10
         logging.warning("no definition of lowest pixel value found in calibration"
                         " falling back to default 10")
-   
+
+    try:
+        background = float(calibration["background"])
+    except KeyError:
+        background = 0.0
+        logging.warning("no definition of background value found in calibration"
+                        " falling back to default 0")   
+
+    
     #define the argument as a function
     if calibration["argument"] == "netOD":
-        arg = lambda x: np.log10((phi0-float(calibration["background"]))/
-                                 (x-float(calibration["background"])))
+        arg = lambda x: np.log10((phi0-background)/
+                                 (x-background))
+        clip = True #limit the values later to black and phi0 to avoid negative OD
+        
     elif calibration["argument"] == "direct":
-        arg = lambda x: x
+        arg = lambda x: (x-background)
+        clip = False #no limiting needed
         
     else:
-        raise ValueError("unknown specification for argument in calibration: "+calibration["argument"])
+        raise ValueError("unknown specification for argument in calibration: "
+                        +calibration["argument"])
+
+
+    if clip and black > phi0:
+        raise ValueError(("phi0 ({:.2f}) is smaller than the black value ({:.2f}). "+
+                         "Cannot procede.").format(phi0, black))
 
     p1 = float(calibration["p1"])
     p2 = float(calibration["p2"])
@@ -108,21 +127,29 @@ def calculate_dose(calibration, scan, phi0):
     elif calibration["function"] == "linear":
         function = lambda x: p1+p2*x
     else:
-        raise ValueError("unknown spcification for function in calibration: "+calibration["function"])
-    
+        raise ValueError("unknown specification for function in calibration: "
+                        +calibration["function"])
+
+   
+   
    #calculate the dose
     if calibration["channel"] in ["red","green","blue"]:
         channel = rgbMap[calibration["channel"]]
         #take the specified function of the given argument construction 
         #(usually net optical density) and clip values to max min.
-        dose = function(arg(np.clip(scan[:,:,channel],int(ceil(black)),int(floor(phi0)))))
+        if clip:
+            dose = function(arg(np.clip(scan[:,:,channel],int(ceil(black)),int(floor(phi0)))))
+        else:
+            dose = function(arg(scan[:,:,channel]))
+            
     elif calibration["channel"] in ["grey","gray"]:
         if  len(scan.shape) > 2:
             raise ValueError("calibration is for grey scale, but scan in multicolor")
         dose = function(arg(scan))
     else:
-        raise ValueError("unknown specification for color channel in calibration: "+calibration["channel"])
-    
+        raise ValueError("unknown specification for color channel in calibration: "
+                        +calibration["channel"])
+
     #give it back    
     return dose
 
@@ -140,7 +167,8 @@ class dose_array(np.ndarray):
         DPI : scalar
             dots per inch of the scan
         calib : dictionary
-            describes the calibration with the keys: argument, p1, p2, p3, function and channel
+            describes the calibration with the keys: argument, p1, p2, p3, 
+            function and channel
         img : numpy array
             the scanned image or part thereof
         phi0 : scalar
@@ -149,17 +177,27 @@ class dose_array(np.ndarray):
         #calculate dose and cast returned array to new class
         dist = calculate_dose(calib,img,phi0)
         obj = np.asarray(dist).view(cls)
-        #set dot per centimeter
-        obj.DPC = DPI/2.54
+        
+        if DPI > 0:
+            #set dot per centimeter
+            obj.DPC = DPI/2.54
+        else:
+            raise ValueError("DPI must be greater than 0")
+            
+        try:
+            obj.unit = calib["unit"]
+        except KeyError:
+            obj.unit = "Gy"
         
         return obj
         
     def __array_finalize__(self,obj):
         #gets called in various construction scenarios, obj is none if it is called from
-        #__new__, DPC will then be properly set, othwerwise set a default for DPC
+        #__new__, DPC will then be properly set, othwerwise set a default for DPC and unit
         if obj is None: return
             
         self.DPC = getattr(obj,'DPC',300./2.54)
+        self.unit = "Gy"
     
     def rectangle_mask(self,x0, y0, width, height, angle=0.0):
         """get a mask for a rectangular area

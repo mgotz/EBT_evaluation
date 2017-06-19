@@ -75,6 +75,24 @@ def gray_tick(x, pos):
     """prints ticks with a Gy as unit appended"""
     return "{:.2f} Gy".format(x)
 
+
+class ScalarFormatterWithUnit(ticker.ScalarFormatter):
+    """extension of the ScalarFormatter appending a unit to each tick label"""
+    def __init__(self, unit="Gy", useOffset=None, useMathText=None, useLocale=None):
+        self.unit=unit
+        super(ScalarFormatterWithUnit,self).__init__(useOffset, useMathText, useLocale)
+    
+    def __call__(self, x, pos=None):
+        """
+        Return the format for tick value `x` at position `pos`.
+        """
+        if len(self.locs) == 0:
+            return ''
+        else:
+            s = self.pprint_val(x)+" "+self.unit
+            return self.fix_minus(s)
+
+
 def gauss(x, A, x0, sigma, offset):
     return A*np.exp(-np.square(x-x0)/(2*sigma**2))+offset
 
@@ -177,6 +195,7 @@ class doseWidget(QtGui.QWidget):
         #buttons
         self.ui.alternateSpecToggle.stateChanged.connect(self.toggle_ROI_spec)
         self.ui.refreshButton.clicked.connect(self.refresh)
+        self.ui.bestLimits.clicked.connect(self.set_optimal_scale)
         self.ui.calculateButton.clicked.connect(self.calculate)        
         self.ui.exportTxtButton.clicked.connect(self.save_as_txt)
         self.ui.exportNpButton.clicked.connect(self.save_as_numpy)
@@ -209,12 +228,12 @@ class doseWidget(QtGui.QWidget):
 
         #set dose limits
         doseMax = np.max(self.doseDistribution)
-        self.ui.doseMin.setMaximum(doseMax)
-        self.ui.doseMax.setMaximum(doseMax)
+        self.ui.doseMin.setMaximum(doseMax*10.)
+        self.ui.doseMax.setMaximum(doseMax*10.)
         self.ui.doseMin.setMinimum(0.0)
         self.ui.doseMax.setMinimum(0.0)
-        self.ui.doseMin.setValue(0.0)
-        self.ui.doseMax.setValue(np.max(self.doseDistribution))        
+        
+        self.set_optimal_scale()        
         
         #set ROI limits
         xMax = self.doseDistribution.shape[1]/self.doseDistribution.DPC
@@ -324,12 +343,8 @@ class doseWidget(QtGui.QWidget):
                     
         self.clb = self.fig.colorbar(self.dosePlot, cax = self.clbAxes,
                                      orientation="vertical", 
-                                     format=ticker.FuncFormatter(gray_tick))
+                                     format=ScalarFormatterWithUnit(unit=self.doseDistribution.unit))
                                      
-#        Colorbar(self.clbAxes,self.dosePlot,orientation="vertical",
-#                            format=ticker.FuncFormatter(gray_tick))
-
-
 
         self.ax1.minorticks_on()
         for axis in ['top','bottom','left','right']:
@@ -712,8 +727,7 @@ class doseWidget(QtGui.QWidget):
         elif new == self.ui.x1 or new == self.ui.y1:
             self.cid = self.canvas.mpl_connect('button_press_event', 
                                                self.click_to_pos1) 
-
-
+    
     def refresh(self):
         self.update_dose_plot()
         self.canvas.draw()
@@ -737,7 +751,14 @@ class doseWidget(QtGui.QWidget):
             np.savetxt(self.savePath,self.doseDistribution,delimiter="\t")
         else:
             logging.debug("save canceled")
-    
+            
+            
+    def set_optimal_scale(self):
+        doseMax = np.max(self.doseDistribution)
+        self.ui.doseMin.setValue(0.0)
+        self.ui.doseMax.setValue(doseMax)
+        
+        
     def toggle_ROI_spec(self):
         """switch between the two blocks of defining the ROI
         """
@@ -746,15 +767,13 @@ class doseWidget(QtGui.QWidget):
             self.ui.y0.setEnabled(True)
             self.ui.x1.setEnabled(True)
             self.ui.y1.setEnabled(True)
-                     
             
             self.ui.xCenter.setDisabled(True)
             self.ui.yCenter.setDisabled(True)
             self.ui.height.setDisabled(True)
             self.ui.width.setDisabled(True)
             self.ui.angle.setDisabled(True)
-            
-            
+             
         else:
             self.ui.x0.setDisabled(True)
             self.ui.y0.setDisabled(True)

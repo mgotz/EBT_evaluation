@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'DoseWidget_QtDesign.ui'
 #
-# Created: Tue Feb 07 21:17:23 2017
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Mon Jun 19 10:23:05 2017
+#      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -67,6 +67,9 @@ class Ui_DoseWidget(object):
         self.refreshButton = QtGui.QPushButton(self.layoutWidget)
         self.refreshButton.setObjectName(_fromUtf8("refreshButton"))
         self.verticalLayout_2.addWidget(self.refreshButton)
+        self.bestLimits = QtGui.QPushButton(self.layoutWidget)
+        self.bestLimits.setObjectName(_fromUtf8("bestLimits"))
+        self.verticalLayout_2.addWidget(self.bestLimits)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem)
         self.line = QtGui.QFrame(self.layoutWidget)
@@ -230,6 +233,7 @@ class Ui_DoseWidget(object):
         self.label_2.setText(_translate("DoseWidget", "min", None))
         self.label_3.setText(_translate("DoseWidget", "max", None))
         self.refreshButton.setText(_translate("DoseWidget", "refresh dose plot", None))
+        self.bestLimits.setText(_translate("DoseWidget", "restore default limits", None))
         self.label_9.setText(_translate("DoseWidget", "evalution method", None))
         self.label_10.setText(_translate("DoseWidget", "region of interest for evaluation", None))
         self.label_5.setText(_translate("DoseWidget", "width", None))
