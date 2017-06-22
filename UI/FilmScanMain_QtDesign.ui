@@ -41,10 +41,10 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <property name="leftMargin">
-               <number>10</number>
+               <number>0</number>
               </property>
               <property name="topMargin">
-               <number>10</number>
+               <number>0</number>
               </property>
               <item>
                <widget class="QLabel" name="label_7">
@@ -54,10 +54,17 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="imagePath"/>
+               <widget class="QLineEdit" name="imagePath">
+                <property name="toolTip">
+                 <string>path to the file containing a scan of films</string>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QPushButton" name="browseImageButton">
+                <property name="toolTip">
+                 <string>browse, if you don't like typing a path</string>
+                </property>
                 <property name="text">
                  <string>browse</string>
                 </property>
@@ -67,6 +74,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="loadButton">
+              <property name="toolTip">
+               <string>load the specified scan</string>
+              </property>
               <property name="text">
                <string>load image</string>
               </property>
@@ -86,7 +96,20 @@
              </spacer>
             </item>
             <item>
+             <widget class="Line" name="line_4">
+              <property name="lineWidth">
+               <number>5</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLabel" name="label_5">
+              <property name="toolTip">
+               <string>the rectangular selection is specified by the coordinates of two corners. Their order is irrelevant.</string>
+              </property>
               <property name="text">
                <string>selection coordinates:</string>
               </property>
@@ -186,6 +209,16 @@
              </widget>
             </item>
             <item>
+             <widget class="QLabel" name="label_15">
+              <property name="toolTip">
+               <string>Use this section to cacluate some simple statistics of the selected area and the selected color channel.</string>
+              </property>
+              <property name="text">
+               <string>raw statistics:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <property name="leftMargin">
                <number>0</number>
@@ -237,6 +270,114 @@
              </layout>
             </item>
             <item>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="Line" name="line_3">
+              <property name="lineWidth">
+               <number>5</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_11">
+              <property name="toolTip">
+               <string>Use this section to save the data (average and std) from all three color channels alongside the selection coordinates to a new line in the specified file. This is to more easily construct the tables needed for calibration.</string>
+              </property>
+              <property name="text">
+               <string>export for calibration:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>save data to:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="saveTablePath">
+                <property name="toolTip">
+                 <string>Path to save the data to. Each save operation appends an new line.</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="browseSaveTable">
+                <property name="toolTip">
+                 <string>Browse for a file instead of giving the path</string>
+                </property>
+                <property name="text">
+                 <string>browse</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <property name="topMargin">
+               <number>10</number>
+              </property>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>film no.</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="filmNumber">
+                <property name="toolTip">
+                 <string>Give the number of the film. This is written as the first column to the save file.</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="saveChannelData">
+                <property name="toolTip">
+                 <string>Save the information relevant to construct a calibration curve to a new line in the save file. Uses only the area selected above.</string>
+                </property>
+                <property name="text">
+                 <string>save</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
              <spacer name="verticalSpacer">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
@@ -263,6 +404,16 @@
              </widget>
             </item>
             <item>
+             <widget class="QLabel" name="label_14">
+              <property name="toolTip">
+               <string>Use this section to create a dose view of the selected area, using the settings made below.</string>
+              </property>
+              <property name="text">
+               <string>create a dose view:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
                <widget class="QLabel" name="label_6">
@@ -273,6 +424,9 @@
               </item>
               <item>
                <widget class="QComboBox" name="calibration_selection">
+                <property name="toolTip">
+                 <string>select an appropriate calibration to calculate the dose</string>
+                </property>
                 <property name="currentIndex">
                  <number>-1</number>
                 </property>

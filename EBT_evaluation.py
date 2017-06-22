@@ -150,9 +150,15 @@ class MainGui(QtGui.QMainWindow):
         self.ui.calcStatsButton.clicked.connect(self.area_stats)
         self.ui.showHistoButton.clicked.connect(self.histogram)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
+        self.ui.browseSaveTable.clicked.connect(self.save_table_file_dialog)
+        self.ui.saveTablePath.returnPressed.connect(self.save_table_path_changed)
+        self.ui.saveChannelData.clicked.connect(self.save_calib_data)
         
         #read the settings file
         self.load_settings() 
+        
+        #init the save path
+        self.saveTablePath = ""
 
     #redefining close event
     def closeEvent(self,event):
@@ -196,6 +202,48 @@ class MainGui(QtGui.QMainWindow):
         self.QtSettings.beginGroup("Settings")
         gui_restore(self.ui,self.QtSettings)
         self.QtSettings.endGroup()
+
+    def check_save_table_path(self, path):
+        """checks if the path given is different from the already saved one
+        and then checks is validity and creates a header"""
+
+        #check if path is empty and try to get something not empty
+        if path == "":
+            path = QtGui.QFileDialog.getSaveFileName(self,'select a file to save to',
+                                                     self.ui.saveTablePath.text(),
+                                                     options = QtGui.QFileDialog.DontConfirmOverwrite)
+            if path == "":
+                return ""
+            else:
+                self.ui.saveTablePath.setText(path)
+        
+        #do nothing if path already checked
+        if self.saveTablePath == path:
+            return path
+                
+        #if it already exists ask to overwrite or append
+        if os.path.isfile(path):
+            title = "path already exists"
+            text = path+"already exists, overwrite or append?"
+            overwriteAnswer = QtGui.QMessageBox.question(self,title,text,
+                                                         "append","overwrite","abort")
+            if overwriteAnswer == 0:
+                return path
+            elif overwriteAnswer == 2:
+                return ""
+        #should not be a dir
+        elif os.path.isdir(path):
+            logging.error("specified path is a directory")
+            return ""
+        
+        #in all other cases, open it for writing and write a header to it
+        headerString = ("film no\t" "filename\t" "x0\ty0\tx1\ty1\t"
+                        "number of pixels\t" 
+                        "R_avg\tR_std\t" "G_avg\tG_std\t" "B_avg\tB_std\n")
+        with open(path,"w") as saveTableFile:
+            saveTableFile.write(headerString)
+            
+        return path
         
     def save_settings(self):
         #save window settings
@@ -224,13 +272,9 @@ class MainGui(QtGui.QMainWindow):
             logging.error("failure while reading calibration files: " + 
                            e.strerror+" at "+e.filename)                
             
-
-        
-
     
 ##############################################################################
-# slots
-    
+# slots 
     def area_stats(self):
         x0 = self.ui.x0.value()
         x1 = self.ui.x1.value()
@@ -250,7 +294,9 @@ class MainGui(QtGui.QMainWindow):
         logging.info("maximum: {:d}".format(maximum))        
         logging.info("minimum: {:d}".format(minimum))
         logging.info("--------------------------------------------------------------")
-        
+    
+
+    
     def change_advSettings(self):
         self.advSettings.change_settings(title="advanced scan settings")
         self.settings = self.advSettings.get_settings()
@@ -344,6 +390,56 @@ class MainGui(QtGui.QMainWindow):
         #plot the image
         self.subplot.imshow(self.npImg)
         self.canvas.draw()
+
+    def save_calib_data(self):
+        """save the average of each channel in the selection area to a file"""
+        x0 = self.ui.x0.value()
+        x1 = self.ui.x1.value()
+        y0 = self.ui.y0.value()
+        y1 = self.ui.y1.value()
+        
+        directory, fileName = os.path.split(self.ui.imagePath.text())
+        
+        saveStr = self.ui.filmNumber.text()
+        saveStr += "\t"+fileName
+        
+        #save coordinates
+        saveStr += "\t{:d}\t{:d}\t{:d}\t{:d}".format(x0,y0,x1,y1)
+        #save area in pixels
+        nofpixels = (max(x0,x1)-min(x0,x1))*(max(y0,y1)-min(y0,y1))
+        saveStr += "\t{:d}".format(nofpixels)        
+        
+        #save the channel data
+        for channel in [0,1,2]:
+            avg = np.average(self.npImg[y0:y1,x0:x1,channel])
+            std = np.std(self.npImg[y0:y1,x0:x1,channel])
+            saveStr += "\t{:.3f}".format(avg)
+            saveStr += "\t{:.3f}".format(std)
+        
+        saveStr += "\n"        
+        
+        self.saveTablePath = self.check_save_table_path(self.ui.saveTablePath.text())
+        
+        if self.saveTablePath == "":
+            logging.warning("nothing written to file")
+        else:
+            with open(self.saveTablePath,"a") as saveTable:
+                saveTable.write(saveStr)
+                logging.info(("info for "+self.ui.filmNumber.text()+" written to file"))
+
+    def save_table_file_dialog(self):
+        filePath =QtGui.QFileDialog.getSaveFileName(self,'select a file to save to',
+                                                    self.ui.saveTablePath.text(),
+                                                    options = QtGui.QFileDialog.DontConfirmOverwrite)
+        if filePath != '':
+            self.ui.saveTablePath.setText(filePath)
+            self.save_table_path_changed()
+        else:
+            logging.info('file selection canceled')
+
+    def save_table_path_changed(self):
+        self.saveTablePath = ""
+        self.saveTablePath = self.check_save_table_path(self.ui.saveTablePath.text())
 
     def selection_changed(self):
         #try to remove old marker
