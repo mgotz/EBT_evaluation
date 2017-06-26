@@ -22,11 +22,14 @@ channel = red
 # or "relativeNetOD" to use the ratio of the netOD of two channels
 argument=netOD
 
-#a background level, to be subtracted from everything
+#a background level, to be subtracted from everything (optional)
 background = 0.0
 
-#the lowest black level that can be measured. For netOD everything below this value will be coerced to this value
+#the lowest black level that can be measured. For netOD everything below this value will be coerced to this value (optional, creates warning, though)
 black = 10.0
+
+#the unit this calibration results in (optional, defaults to Gy), can also be an empty string
+unit = Gy
 
 # function to calculate the dose
 # currently the functions are implemented: 
