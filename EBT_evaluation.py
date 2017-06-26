@@ -153,6 +153,7 @@ class MainGui(QtGui.QMainWindow):
         self.ui.browseSaveTable.clicked.connect(self.save_table_file_dialog)
         self.ui.saveTablePath.returnPressed.connect(self.save_table_path_changed)
         self.ui.saveChannelData.clicked.connect(self.save_calib_data)
+        self.ui.calcPhi0Button.clicked.connect(self.get_phi0)
         
         #read the settings file
         self.load_settings() 
@@ -282,11 +283,13 @@ class MainGui(QtGui.QMainWindow):
         y1 = self.ui.y1.value()
         
         channel = self.ui.channel_selection.itemData(self.ui.channel_selection.currentIndex())
+
         avg = np.average(self.npImg[y0:y1,x0:x1,channel])
         std = np.std(self.npImg[y0:y1,x0:x1,channel])
         minimum = np.min(self.npImg[y0:y1,x0:x1,channel])
         maximum = np.max(self.npImg[y0:y1,x0:x1,channel])
 
+            
         logging.info("### Statistics for area x: {:d} - {:d}; y: {:d} - {:d} ###".format(x0,x1,y0,y1))
         logging.info("channel: {!s}".format(self.ui.channel_selection.currentText()))
         logging.info("average: {:.3f}".format(avg))
@@ -311,7 +314,20 @@ class MainGui(QtGui.QMainWindow):
         
     def close_tab(self, index):
         self.ui.tabWidget.removeTab(index)
+    
+    def get_phi0(self):
+        x0 = self.ui.x0.value()
+        x1 = self.ui.x1.value()
+        y0 = self.ui.y0.value()
+        y1 = self.ui.y1.value()        
         
+        channels = [self.ui.channel_selection.itemData(i) for i in range(self.ui.channel_selection.count())]
+        
+        for ch, field in zip(channels,[self.ui.phi0Ch1,self.ui.phi0Ch2,self.ui.phi0Ch3]):
+            avg = np.average(self.npImg[y0:y1,x0:x1,ch])
+            field.setValue(avg)
+        
+    
     def histogram(self):
         #show a histgram of the selected channel
         channel = self.ui.channel_selection.itemData(self.ui.channel_selection.currentIndex())
@@ -319,7 +335,8 @@ class MainGui(QtGui.QMainWindow):
         #create a window, the reference must be stored, because the window
         #gets destroyed when its reference is garbage collected
         #make plotWindow a list and append to that if multiple windows should be possible
-        self.plotWindow = simple_plot_window(name = "histogram of {:s} channel".format(self.ui.channel_selection.currentText()))
+        title = "histogram of {:s} channel".format(self.ui.channel_selection.currentText())
+        self.plotWindow = simple_plot_window(name = title)
         self.plotWindow.ax1.hist(self.npImg[self.ui.y0.value():self.ui.y1.value(),
                                             self.ui.x0.value():self.ui.x1.value(), 
                                             channel].flatten(),
@@ -350,16 +367,50 @@ class MainGui(QtGui.QMainWindow):
         except (IOError, OSError) as e:
             logging.error("failed to open file: "+str(e))
             return ()
+ 
+
+        #check the format of the loaded image and adjust the input field accordingly
+        logging.debug("image mode: "+img.mode)
+        self.ui.channel_selection.clear()
         
-        if not (img.mode == "RGB" or img.mode == "L"):
+        if img.mode == "RGB":
+            self.ui.channel_selection.addItem("red",0)
+            self.ui.channel_selection.addItem("green",1)
+            self.ui.channel_selection.addItem("blue",2)
+            
+            #set the phi0 input
+            for field in [self.ui.phi0Ch1,self.ui.phi0Ch2,self.ui.phi0Ch3]:
+                field.setMaximum(255)
+                field.setMinimum(0)
+                field.setEnabled(True)
+            self.ui.phi0LabelCh1.setText("red:")
+            self.ui.phi0LabelCh2.setText("green:")
+            self.ui.phi0LabelCh3.setText("blue:")
+        elif img.mode == "L" or img.mode == "I":
+            #none because there is no third dimension in greyscale
+            self.ui.channel_selection.addItem("grey",None)
+            modeMax = {"L":255,"I":2**31}
+            modeMin = {"L":0,"I":-2**31}
+        
+            
+            #set the phi0 input
+            self.ui.phi0Ch1.setEnabled(True)
+            self.ui.phi0Ch1.setMaximum(modeMax[img.mode])
+            self.ui.phi0Ch1.setMinimum(modeMin[img.mode])
+            self.ui.phi0Ch2.setDisabled(True)
+            self.ui.phi0Ch3.setDisabled(True)
+            
+            self.ui.phi0LabelCh1.setText("phi0:")
+        else:
             logging.warning("unsupported image mode "+img.mode+
                             " (check pillow docs for details) "+
                             "expected RGB or greyscale image, proceed with caution")
-        
+
+        #create np array from image and flip
         if self.settings["legacy mode"]:
             self.npImg = np.array(img)
         else:
-            self.npImg = np.fliplr(np.array(img))
+            self.npImg = np.fliplr(np.array(img)) 
         
         logging.debug("loaded image of dimensions: "+str(self.npImg.shape)+
                       " and type: "+str(self.npImg.dtype))
@@ -373,22 +424,9 @@ class MainGui(QtGui.QMainWindow):
         self.ui.x1.setValue(self.npImg.shape[1])
         self.ui.y1.setMaximum(self.npImg.shape[0])
         self.ui.y1.setValue(self.npImg.shape[0])
-        
-        self.ui.channel_selection.clear()
-        if len(self.npImg.shape) > 2:
-            if self.npImg.shape[2] == 3:
-                self.ui.channel_selection.addItem("red",0)
-                self.ui.channel_selection.addItem("green",1)
-                self.ui.channel_selection.addItem("blue",2)
-            else:
-                for i in range(0,self.npImg.shape[2]):
-                    self.ui.channel_selection.addItem("channel {:d}".format(i),i)
-            self.ui.channel_selection.setCurrentIndex(0)
-        else:
-            self.ui.channel_selection.addItem("grey",0)
 
         #plot the image
-        self.subplot.imshow(self.npImg)
+        self.subplot.imshow(self.npImg,cmap="gray")
         self.canvas.draw()
 
     def save_calib_data(self):
@@ -461,12 +499,26 @@ class MainGui(QtGui.QMainWindow):
         logging.debug("calculating dose")
         idx = self.ui.calibration_selection.currentIndex()
         try:
-            doseDistribution = dose_array(self.ui.DPI.value(),
-                                          self.ui.calibration_selection.itemData(idx),
-                                          self.npImg[self.ui.y0.value():self.ui.y1.value(),
-                                                     self.ui.x0.value():self.ui.x1.value(),
-                                                     :],
-                                          self.ui.phi0.value())
+            #get the phi0 value from all currently allowed fields
+            phi0 = []
+            for inputField in [self.ui.phi0Ch1, self.ui.phi0Ch2, self.ui.phi0Ch3]:
+                if inputField.isEnabled():
+                    phi0.append(inputField.value())
+            
+            #undo the  dimension expansion for grey scale images
+            if self.ui.channel_selection.count() == 1:
+                doseDistribution = dose_array(self.ui.DPI.value(),
+                                              self.ui.calibration_selection.itemData(idx),
+                                              self.npImg[self.ui.y0.value():self.ui.y1.value(),
+                                                         self.ui.x0.value():self.ui.x1.value()],
+                                              phi0)
+            else:
+                doseDistribution = dose_array(self.ui.DPI.value(),
+                                              self.ui.calibration_selection.itemData(idx),
+                                              self.npImg[self.ui.y0.value():self.ui.y1.value(),
+                                                         self.ui.x0.value():self.ui.x1.value(),
+                                                         :],
+                                              phi0)
             self.tabCounter += 1  
             index = self.ui.tabWidget.addTab(doseWidget(doseDistribution,settings=self.doseViewSettings.get_settings()),
                                              "dose view {:d}".format(self.tabCounter))

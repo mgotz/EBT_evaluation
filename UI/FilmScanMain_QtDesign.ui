@@ -477,21 +477,116 @@
               </property>
               <item>
                <widget class="QLabel" name="label_10">
+                <property name="toolTip">
+                 <string>give the pixel value that corresponds to 0 dose, in order to calculate the net optical density</string>
+                </property>
                 <property name="text">
                  <string>phi 0</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QDoubleSpinBox" name="phi0">
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="calcPhi0Button">
                 <property name="toolTip">
-                 <string>give the pixel value that corresponds to 0 dose, in order to calculate the net optical density</string>
+                 <string>use the average values from the current selection as phi0</string>
+                </property>
+                <property name="text">
+                 <string>take current selection</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_9">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>10</number>
+              </property>
+              <property name="rightMargin">
+               <number>10</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="phi0LabelCh1">
+                <property name="text">
+                 <string>red:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="phi0Ch1">
+                <property name="toolTip">
+                 <string>red/1st channel value for 0 dose</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                 <property name="decimals">
-                 <number>4</number>
+                 <number>3</number>
+                </property>
+                <property name="maximum">
+                 <double>255.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="phi0LabelCh2">
+                <property name="text">
+                 <string>green:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="phi0Ch2">
+                <property name="toolTip">
+                 <string>green/2nd channel value for 0 dose</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
+                </property>
+                <property name="maximum">
+                 <double>255.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="phi0LabelCh3">
+                <property name="text">
+                 <string>blue:</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="phi0Ch3">
+                <property name="toolTip">
+                 <string>blue/3rd channel value for 0 dose</string>
+                </property>
+                <property name="decimals">
+                 <number>3</number>
                 </property>
                 <property name="maximum">
                  <double>255.000000000000000</double>
@@ -583,7 +678,6 @@
   <tabstop>showHistoButton</tabstop>
   <tabstop>calibration_selection</tabstop>
   <tabstop>DPI</tabstop>
-  <tabstop>phi0</tabstop>
   <tabstop>showDose_button</tabstop>
  </tabstops>
  <resources/>

@@ -69,11 +69,11 @@ def calculate_dose(calibration, scan, phi0):
     Parameters
     ----------
     calibration : dictionary
-        describes the calibration with the keys: argument, p1, p2, p3, function and channel
-        optional keys are black and background
+        describes the calibration with the keys: argument, p1, p2, p3, function 
+        and channel, optional keys are black and background
     scan : numpy array
         the scanned image or part thereof
-    phi0 : scalar
+    phi0 : scalar or lenght 3 iterable
         I0 to calculate the net optical density
         
     Returns
@@ -97,25 +97,52 @@ def calculate_dose(calibration, scan, phi0):
         logging.warning("no definition of background value found in calibration"
                         " falling back to default 0")   
 
+    #check proper format of phi0 and allow treatement as a list in any case
+    try:
+        if len(phi0) != 3:
+            raise ValueError("phi0 should have length 3"+
+                             " (one value for each channel) or be a scalar")
+    except:
+        phi0 = [phi0]
+
+    #get the channels in list
+    channels = calibration["channel"].replace(" ","").split(",")
     
     #define the argument as a function
     if calibration["argument"] == "netOD":
-        arg = lambda x: np.log10((phi0-background)/
-                                 (x-background))
-        clip = True #limit the values later to black and phi0 to avoid negative OD
+        arg = lambda x, x0: np.log10((x0-background)/
+                                 (np.clip(x,int(ceil(black)),int(floor(x0)))-background))
+        if len(channels) != 1:
+            raise ValueError("netOD requires one and only one channel, "+
+                             "{:d} given".format(len(channels)))
+        if any(black > x0 for x0 in phi0):
+            phiStr = ["{:.2f}".format(x0) for x0 in phi0]
+            raise ValueError("phi0 ("+", ".join(phiStr) +") is smaller"+
+                             " than the black value ({:.2f}). ".format(black) +
+                             "Cannot procede.")
         
     elif calibration["argument"] == "direct":
-        arg = lambda x: (x-background)
-        clip = False #no limiting needed
+        arg = lambda x, phi0: (x-background)
+        if len(channels) != 1:
+            raise ValueError("direct argument requires one and only one channel, "+
+                             "{:d} given".format(len(channels)))
         
+    elif calibration["argument"] == "relativeNetOD":
+        arg = lambda x1, x2, x01, x02: (
+                np.log10((x01-background)/(np.clip(x1,int(ceil(black)),int(floor(x01)))-background))/
+                 np.log10((x02-background)/(np.clip(x2,int(ceil(black)),int(floor(x02)))-background)))
+        if len(channels) != 2:
+            raise ValueError("relative netOD requires exactly two channels, "+
+                             "{:d} given".format(len(channels)))
+        if any(black > x0 for x0 in phi0):
+            phiStr = ["{:.2f}".format(x0) for x0 in phi0]
+            raise ValueError("phi0 ("+", ".join(phiStr) +") is smaller"+
+                             " than the black value ({:.2f}). ".format(black) +
+                             "Cannot procede.")
+
     else:
         raise ValueError("unknown specification for argument in calibration: "
                         +calibration["argument"])
-
-
-    if clip and black > phi0:
-        raise ValueError(("phi0 ({:.2f}) is smaller than the black value ({:.2f}). "+
-                         "Cannot procede.").format(phi0, black))
 
     p1 = float(calibration["p1"])
     p2 = float(calibration["p2"])
@@ -126,32 +153,39 @@ def calculate_dose(calibration, scan, phi0):
         function = lambda x: p1*x+p2*np.power(x,p3)
     elif calibration["function"] == "linear":
         function = lambda x: p1+p2*x
+    elif calibration["function"] == "rational":
+        function = lambda x: p1+p2/(p3+x)
     else:
         raise ValueError("unknown specification for function in calibration: "
                         +calibration["function"])
 
    
    
-   #calculate the dose
-    if calibration["channel"] in ["red","green","blue"]:
-        channel = rgbMap[calibration["channel"]]
-        #take the specified function of the given argument construction 
-        #(usually net optical density) and clip values to max min.
-        if clip:
-            dose = function(arg(np.clip(scan[:,:,channel],int(ceil(black)),int(floor(phi0)))))
+    #get the proper channels from the scan and select the corresponding phi0s
+    if all(color in rgbMap for color in channels):
+        chIndices = [rgbMap[color] for color in channels]
+        relevantScanData = [scan[:,:,index] for index in chIndices]
+        if len(chIndices) == 1 and len(phi0) == 1:
+            relevantPhi0 = phi0
+        elif len(phi0) != 3:
+            raise ValueError("phi0 must contain 3 values or be a scalar for "+
+                             "single channel evaluation")
         else:
-            dose = function(arg(scan[:,:,channel]))
-            
+            relevantPhi0 = [phi0[index] for index in chIndices]
     elif calibration["channel"] in ["grey","gray"]:
         if  len(scan.shape) > 2:
             raise ValueError("calibration is for grey scale, but scan in multicolor")
-        dose = function(arg(scan))
+        relevantScanData = [scan]
+        if len(phi0) != 1:
+            raise ValueError("more than 1 phi0 provided for a grey-scale evaluation")
+        else:    
+            relevantPhi0 = phi0
     else:
         raise ValueError("unknown specification for color channel in calibration: "
                         +calibration["channel"])
 
-    #give it back    
-    return dose
+    #use the function and the argument to calculate dose from the relevant data  
+    return function(arg(*(relevantScanData+relevantPhi0)))
 
 class dose_array(np.ndarray):
     """ class to conatain a dose distribution
