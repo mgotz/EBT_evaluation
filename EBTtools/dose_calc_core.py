@@ -84,7 +84,7 @@ def calculate_dose(calibration, scan, phi0):
 
         
     try:
-        black = calibration["black"]
+        black = float(calibration["black"])
     except KeyError:
         black = 10
         logging.warning("no definition of lowest pixel value found in calibration"

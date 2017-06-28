@@ -250,7 +250,7 @@ class MainGui(QtGui.QMainWindow):
         #save window settings
         self.QtSettings.beginGroup("MainWindow")
         self.QtSettings.setValue("geometry",self.saveGeometry())
-        self.QtSettings.setValue("stat",self.saveState())
+        self.QtSettings.setValue("state",self.saveState())
         self.QtSettings.endGroup()
         
         #save element content

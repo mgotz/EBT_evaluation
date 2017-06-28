@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'FilmScanMain_QtDesign.ui'
 #
-# Created: Mon Jun 26 12:47:21 2017
+# Created: Wed Jun 28 16:44:20 2017
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -241,6 +241,7 @@ class Ui_MainWindow(object):
         self.phi0Ch1.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.phi0Ch1.setDecimals(3)
         self.phi0Ch1.setMaximum(255.0)
+        self.phi0Ch1.setProperty("value", 255.0)
         self.phi0Ch1.setObjectName(_fromUtf8("phi0Ch1"))
         self.horizontalLayout_9.addWidget(self.phi0Ch1)
         self.phi0LabelCh2 = QtGui.QLabel(self.layoutWidget1)
@@ -250,6 +251,7 @@ class Ui_MainWindow(object):
         self.phi0Ch2 = QtGui.QDoubleSpinBox(self.layoutWidget1)
         self.phi0Ch2.setDecimals(3)
         self.phi0Ch2.setMaximum(255.0)
+        self.phi0Ch2.setProperty("value", 255.0)
         self.phi0Ch2.setObjectName(_fromUtf8("phi0Ch2"))
         self.horizontalLayout_9.addWidget(self.phi0Ch2)
         self.phi0LabelCh3 = QtGui.QLabel(self.layoutWidget1)
@@ -259,6 +261,7 @@ class Ui_MainWindow(object):
         self.phi0Ch3 = QtGui.QDoubleSpinBox(self.layoutWidget1)
         self.phi0Ch3.setDecimals(3)
         self.phi0Ch3.setMaximum(255.0)
+        self.phi0Ch3.setProperty("value", 255.0)
         self.phi0Ch3.setObjectName(_fromUtf8("phi0Ch3"))
         self.horizontalLayout_9.addWidget(self.phi0Ch3)
         self.verticalLayout_4.addLayout(self.horizontalLayout_9)

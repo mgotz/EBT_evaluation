@@ -21,10 +21,10 @@ except AttributeError:
         return s
 
 class easy_edit_settings():
-    """a class around formlay to give easy to use settings
+    """a class around formlayout to give easy to use settings
     
     initalized with a list of tuples that specifiy the settings it can return
-    a dictionary with the settings to easly use in the application
+    a dictionary with the settings to easily use in the application
     """
     def __init__(self, settings):
         """ initialize the advanced settings
@@ -130,10 +130,11 @@ def gui_save(ui, settings):
             name = obj.objectName()
             state = obj.checkState()
             settings.setValue(name, state)
-        if isinstance(obj, QtGui.QSpinBox):
+        if isinstance(obj, QtGui.QSpinBox) or isinstance(obj, QtGui.QDoubleSpinBox):
             name = obj.objectName()
             value = obj.value()
             settings.setValue(name,value)
+            
 
 #===================================================================
 # restore "ui" controls with values stored in registry "settings"
@@ -190,13 +191,16 @@ def gui_restore(ui, settings):
                 value = None
             if value != None:
                 obj.setValue(value)
-                """
-                value, good = value.toInt() #int conversion returns tuple, where the second part indicates a valid conversion
-                if good:
-                    obj.setValue(value)
-                """
-        
-        #if isinstance(obj, QRadioButton):                
+
+        if isinstance(obj, QtGui.QDoubleSpinBox):
+            name = obj.objectName()
+            try:
+                value = settings.value(name,type=float)
+            except TypeError:
+                value = None
+            if value != None:
+                obj.setValue(value)
+               
 
 ################################################################
 
