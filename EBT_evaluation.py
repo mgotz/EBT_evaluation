@@ -288,11 +288,13 @@ class MainGui(QtGui.QMainWindow):
         std = np.std(self.npImg[y0:y1,x0:x1,channel])
         minimum = np.min(self.npImg[y0:y1,x0:x1,channel])
         maximum = np.max(self.npImg[y0:y1,x0:x1,channel])
+        
+        n = (max(x1,x0)-min(x1,x0))*(max(y1,y0)-min(y1,y0))
 
             
         logging.info("### Statistics for area x: {:d} - {:d}; y: {:d} - {:d} ###".format(x0,x1,y0,y1))
         logging.info("channel: {!s}".format(self.ui.channel_selection.currentText()))
-        logging.info("average: {:.3f}".format(avg))
+        logging.info("average: {:.3f} +- {:.3f}".format(avg,std/np.sqrt(n)))
         logging.info("standard deviation: {:.3f}".format(std))
         logging.info("maximum: {:d}".format(maximum))        
         logging.info("minimum: {:d}".format(minimum))
