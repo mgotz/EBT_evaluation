@@ -45,3 +45,25 @@ function=linear
 p1=0
 p2=1
 p3=0
+
+[red netOD]
+tooltip=just net optical density for red channel
+channel= red
+argument=netOD
+background=0
+unit=
+function=linear
+p1=0
+p2=1
+p3=0
+
+[relative netOD red/blue]
+tooltip=relative net optical density of red divided by blue channel
+channel= red, blue
+argument=relativeNetOD
+background=0
+unit=
+function=linear
+p1=0
+p2=1
+p3=0
