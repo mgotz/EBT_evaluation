@@ -7,6 +7,9 @@ Created on Sun Apr 24 20:10:16 2016
 core functions to load calibration data and calculate dose from scanned films
    
 """
+#get ready for python 3
+from __future__ import (print_function, division, absolute_import,
+                        unicode_literals)
 
 import codecs
 from collections import OrderedDict
@@ -439,10 +442,10 @@ if __name__ == '__main__':
     doseDistribution = dose_array(300.,calibs["example"],scan,255)
     
     mask = doseDistribution.rectangle_mask(0.4,0.5,0.2,0.1,0.0)
-    print doseDistribution[mask].shape
+    print (doseDistribution[mask].shape)
 
     summed, avg, std, minimum, maximum = doseDistribution.rectangle_stats(0.4,0.5,0.2,0.1,45.0,False)
-    print (summed,avg,std,minimum,maximum)
+    print (summed, avg, std, minimum, maximum)
 
     doseDistribution.ellipse_stats(2.0,1.0,0.5,0.2,0.0,False)    
     

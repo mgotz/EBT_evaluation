@@ -32,6 +32,10 @@ calibration location into advanced settings:
     load adv settings before loading calibration
     load gui settings after
 """
+#get ready for python 3
+from __future__ import (print_function, division, absolute_import,
+                        unicode_literals)
+
 #modules for exception handeling
 import sys
 import traceback
@@ -48,20 +52,22 @@ import sys
 import numpy as np
 
 
-
 #Qt stuff, with API variant that does not use QtVariables like QString but regular
 #Python variables (saves a lot of conversion headaches)
 import sip
-API_NAMES = ["QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", "QVariant"]
+API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
+             "QVariant")
 API_VERSION = 2
 for name in API_NAMES:
     sip.setapi(name, API_VERSION)
-    
-from PyQt4 import QtCore, QtGui
 
+#make sure other modules use pyqt4 as well (you cant mix qt versions)
+os.environ["QT_API"] = 'pyqt'
+from PyQt4 import QtCore, QtGui
 
 from matplotlib import use
 use("Qt4Agg")
+
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg \
@@ -88,7 +94,8 @@ from UI.FilmScanMainUI import Ui_MainWindow
 #define a list with advanced settings (editable via fromLayout)
 #each list entry is a setting, with the first part as identifier and second as value
 settingsList = [("selection rectangle","red"),
-                ("legacy mode",True),
+                ("mirror on load",False),
+                ("rotate on load",False),
                 ("histogramm bins",256),
                 ("histogramm min",0),
                 ("histogramm max",255)]
@@ -408,11 +415,17 @@ class MainGui(QtGui.QMainWindow):
                             " (check pillow docs for details) "+
                             "expected RGB or greyscale image, proceed with caution")
 
-        #create np array from image and flip
-        if self.settings["legacy mode"]:
-            self.npImg = np.array(img)
+        #create np array from image and rotate if needed
+        if self.settings["rotate on load"]:
+            self.npImg = np.rot90(np.array(img))
         else:
-            self.npImg = np.fliplr(np.array(img)) 
+            self.npImg = np.array(img)
+        
+        #mirror the image if desired
+        if self.settings["mirror on load"]:
+            self.npImg = np.fliplr(self.npImg)
+
+             
         
         logging.debug("loaded image of dimensions: "+str(self.npImg.shape)+
                       " and type: "+str(self.npImg.dtype))
