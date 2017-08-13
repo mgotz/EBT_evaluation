@@ -18,7 +18,7 @@ from PyQt4 import QtGui
 from matplotlib.backend_tools import Cursors
 cursors = Cursors()
 
-class myNavigationToolbar(NavigationToolbar2QT):
+class MyNavigationToolbar(NavigationToolbar2QT):
     """a toolbar with subplots and save removed and a selection tool added
        connect a callback to "selection_changed" to get notified when the 
        selection is changed
@@ -33,13 +33,15 @@ class myNavigationToolbar(NavigationToolbar2QT):
             toolitems.append((text, tooltip_text, image_file,callback))
     
     #create a path of the selection icon 
-    iconPath = pathTools.abspath(pathTools.join(pathTools.curdir,"UI","select_icon"))
+    iconPath = pathTools.abspath(pathTools.join(pathTools.dirname(__file__),
+                                                "select_icon"))
     #add selection icon and seperator in front of other icons
     toolitems = [("Select","make a slection",iconPath,"select"),(None,None,None,None)]+toolitems
     
     def __init__(self, canvas,parent):
         NavigationToolbar2QT.__init__(self,canvas,parent)
 
+        
         #set the selection button as a toggle and initialize the mode
         self._actions["select"].setCheckable(True)
        

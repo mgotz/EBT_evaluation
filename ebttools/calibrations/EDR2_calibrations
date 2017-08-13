@@ -1,0 +1,13 @@
+[EDR2]
+tooltip = calibration from 05.2009 by A. Henning for EDR2 films scanned with Vidar2 converted to RGB
+
+channel = red
+argument = netOD
+function = exp_poly
+background = 0.0
+
+p1 = 0.383
+p2 = 1.268
+p3 = 4.329
+
+## Kalibrierung von A. Henning Mai 2009; fuer Auswertung von EDR2 Filmen (gescannt mit Vidar2-Scanner umgewandelt in RGB)
