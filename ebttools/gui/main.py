@@ -28,39 +28,28 @@ import os
 import sys
 import traceback
 
-#Qt stuff, with API variant that does not use QtVariables like QString but regular
-#Python variables (saves a lot of conversion headaches)
-import sip
-API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
-             "QVariant")
-API_VERSION = 2
-for name in API_NAMES:
-    sip.setapi(name, API_VERSION)
-
-#make sure other modules use pyqt4 as well (you cant mix qt versions)
-os.environ["QT_API"] = 'pyqt'
-from PyQt4 import QtCore, QtGui
-
-
-#plotting with matplotlib
-from matplotlib import use
-use("Qt4Agg")
-
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt4agg \
-  import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.patches import Rectangle
-
-#image loading functionality
-from PIL import Image 
-
-#import my gui helper functions (save, load gui data, gui logger, adv settings)
-from mg import pyguitools
-
-
-
-#use absolute imports if main:
+#certain stuff only needed when this is run directly and not as a module
 if __name__ == '__main__':
+    #if not run as main, the module init should ensure proper PyQt and api version
+    
+    #Qt stuff, with API variant that does not use QtVariables like QString but regular
+    #Python variables (saves a lot of conversion headaches)
+    import sip
+    API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
+                 "QVariant")
+    API_VERSION = 2
+    for name in API_NAMES:
+        sip.setapi(name, API_VERSION)
+
+    #make sure other modules use pyqt4 as well (you cant mix qt versions)
+    os.environ["QT_API"] = 'pyqt'
+    
+    #and call out matplotlib in particular
+    from matplotlib import use
+    use("Qt4Agg")
+    
+    #cannot do relative import in a  main
+    sys.path.append(os.path.join(os.path.dirname(__file__),"..",".."))
     #module with the dose calculation routines
     from ebttools.core import load_calibrations, DoseArray
     #my custom toolbar and main ui
@@ -75,6 +64,22 @@ else:
     from .navtoolbar import MyNavigationToolbar
     #the dose display window
     from .dosewidget import DoseWidget, _advSettings
+
+#load the Qt bindings
+from PyQt4 import QtCore,QtGui
+
+#load matplotlib for plotting
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt4agg \
+  import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.patches import Rectangle
+
+#image loading functionality
+from PIL import Image 
+
+#import my gui helper functions (save, load gui data, gui logger, adv settings)
+from mg import pyguitools
+
         
 #define a list with advanced settings (editable via fromLayout)
 #each list entry is a setting, with the first part as identifier and second as value
