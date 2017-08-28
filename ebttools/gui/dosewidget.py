@@ -19,17 +19,38 @@ from __future__ import (print_function, division, absolute_import,
 import logging
 import numpy as np
 import os
+import traceback
+
 import sys
-sys.path.append(os.path.join(sys.path[0],".."))
 from collections import OrderedDict
 
+#load qt design UI, use relative import if run as a module
+if __name__ == '__main__':
+    #ensure right api version and pyqt version
+    os.environ["QT_API"]="pyqt"
+    import sip
+    API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
+                 "QVariant")
+    API_VERSION = 2
+    for name in API_NAMES:
+        sip.setapi(name, API_VERSION)
+    
+    from matplotlib import use
+    use("Qt4Agg")
+    
+    sys.path.append(os.path.join(sys.path[0],"..",".."))
+    
+    from dosewidget_ui import Ui_DoseWidget
+    from testwindow_ui import Ui_MainWindow
+else:
+    from .dosewidget_ui import Ui_DoseWidget
+    from .testwindow_ui import Ui_MainWindow
+
+
 #Qt stuff
-import sip
-sip.setapi('QVariant', 2) #use python types instead of qt types (e.g. string insted of Qstring)
 from PyQt4 import QtCore, QtGui
 
-from matplotlib import use
-use("Qt4Agg")
+
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt4agg \
@@ -47,13 +68,7 @@ from mg.pyguitools import EasyEditSettings, SimplePlotWindow
 #2D gauss fitting
 from mg.dataprocessing import (gauss2D, fit_2D_gauss, cross, FitError)
 
-#load qt design UI, use relative import if run as a module
-if __name__ == '__main__':
-    from dosewidget_ui import Ui_DoseWidget
-    from testwindow_ui import Ui_MainWindow
-else:
-    from .dosewidget_ui import Ui_DoseWidget
-    from .testwindow_ui import Ui_MainWindow
+
     
 from ebttools.core import DoseArray
 
@@ -146,13 +161,16 @@ class DoseWidget(QtGui.QWidget):
                                  ("Ellipse",{"eval":self.ellipse,
                                             "marker":self.ellipse_marker,
                                             "tip":"elliptical selection area"}),
-                                 ("Parabola profile",{"eval":self.profile_with_parabola,
-                                                     "marker":self.line_marker,
-                                                     "tip":"get a profile and fit a parabola"}),
-                                 ("Gauss profile",{"eval":self.profile_with_gauss,
-                                                   "marker":self.line_marker,
-                                                   "tip":"get a profile and fit a gaussian"}),
-                                 ("2D Gauss fit",{"eval":self.fit_2D_gauss,
+                                 ("Profile",{"eval":self.profile,
+                                             "marker":self.line_marker,
+                                             "tip":"get a profile"}),
+                                 ("Profile: Parabola Fit",{"eval":self.profile_with_parabola,
+                                                           "marker":self.line_marker,
+                                                           "tip":"get a profile and fit a parabola"}),
+                                 ("Profile: Gauss Fit",{"eval":self.profile_with_gauss,
+                                                        "marker":self.line_marker,
+                                                        "tip":"get a profile and fit a gaussian"}),
+                                 ("2D Gauss Fit",{"eval":self.fit_2D_gauss,
                                                   "marker":self.axis_parallel_rectangle_marker,
                                                   "tip":"fit the entire distribution with a 2D Gaussian"})])
         
@@ -497,6 +515,28 @@ class DoseWidget(QtGui.QWidget):
         logging.info("maximum: {:.4e} Gy".format(stats[4]))
         logging.info("--------------------------------------------------------------")
     
+    def profile(self):
+        """get a profile of the image
+        """
+        #construct the window
+        windowName = "profile ({:.3e},{:.3e}) - ({:.3e},{:.3e})".format(self.ui.x0.value(),
+                                                                        self.ui.y0.value(),
+                                                                        self.ui.x1.value(),
+                                                                        self.ui.y1.value())
+        self.profileWindow = SimplePlotWindow(name=windowName)
+        
+        #get the x and y profile data and plot it
+        y = self.doseDistribution.profile(self.ui.x0.value(),
+                                          self.ui.y0.value(),
+                                          self.ui.x1.value(),
+                                          self.ui.y1.value(),
+                                          interpolation=self.settings["profile interpolation"])
+        x = np.linspace(0,self.ui.width.value(),len(y))
+        self.profileWindow.ax1.plot(x,y,label="profile")
+        
+        #show the window
+        self.profileWindow.show()
+    
     def profile_with_parabola(self):
         """get a profile of the image and fit it with a 2nd order polynomial
         """
@@ -563,7 +603,7 @@ class DoseWidget(QtGui.QWidget):
         
         if success != 1 and success != 2 and success != 3 and success !=4:
             logging.error("Fit failed with message: "+msg)
-        elif cov == None:
+        elif cov is None:
             logging.error("None covariance matrix after {:d} iterations".format(info["nfev"]))
         else:
             fittedY = gauss(x,*p)
@@ -663,6 +703,7 @@ class DoseWidget(QtGui.QWidget):
             self.ui.evalFunction.itemData(idx)["eval"]()
         except ValueError as e:
             logging.error("Value Error: "+e.message)
+            logging.debug("Tracback: " + traceback.format_exc().replace("\n"," - "))
             logging.error("check evaluation method and ROI")
 
     def clear_2D_fit(self):
