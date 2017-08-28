@@ -18,7 +18,7 @@ Download and switch to the extracted directory. Then run
 This will trigger a depreciation warning, but there is no other way for external dependencies and it has been depreciated but not removed for several years.
 It should install the EBT_evaluation and all its dependencies, including my own modules from github.
 In addition it will create a script/executable called *EBT-evaluation*.
-You can use this script/executable to directly run the GUI.
+You can use this script/executable to directly run the GUI, on Linux just call EBT-evaluation from the terminal, on Winows the .exe should be in python-directory/Scripts.
 
 If pip is somehow unavailable
 > easy_install .
