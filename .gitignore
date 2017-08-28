@@ -2,3 +2,7 @@
 log.out
 *.ini
 todo.txt
+#build and setup stuff
+build
+dist
+*.egg-info
