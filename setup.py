@@ -19,7 +19,7 @@ setup(
 					"ebttools":["calibrations/*"]},
 	
     license='MIT',
-    long_description=read('README.txt'),
+    long_description=read('README.md'),
     
     author='Malte Gotz',
     author_email='malte.gotz@oncoray.de',
