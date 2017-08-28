@@ -29,9 +29,9 @@ should also work or
 
 However, pip is most likely to get all the dependencies correctly figured out.
 
-If non of these work, you can also download the dependencies manually and install them.
+If none of these work, you can also download the dependencies manually and install them.
 Get the PyGUITools and PyDataProcessing repositories from my github and install them using their respective setup.py.
-Then install the EBTtools and resolbe all other dependencies, primarily those should be PyQt4, matplotlib, scipy and pillow.
+Then install the EBTtools and resolve all other dependencies, primarily those should be PyQt4, matplotlib, scipy and pillow.
 The GUI can be run using the creaed *EBT-evaluation* script/executable or using the run.py.
 
 If all fails, copy the mg directories in those repositories into the same directory as the run.py and then it should find what it needs.
