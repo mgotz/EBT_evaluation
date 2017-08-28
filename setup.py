@@ -12,23 +12,30 @@ def read(fname):
 
 setup(
     name='ebttools',
-    version='0.2.0',
+    version='1.0.0',
     
     packages=find_packages(), #automagically include all subfolders as packages
-    
+    package_data = {"":["*.png"],
+					"ebttools":["calibrations/*"]},
+	
     license='MIT',
     long_description=read('README.txt'),
     
     author='Malte Gotz',
     author_email='malte.gotz@oncoray.de',
     url='https://github.com/mgotz/EBT_evalution',
-    
+	
     install_requires=['matplotlib',
                       'scipy',
                       'numpy',
-                      'mg.dataprocessing',
-                      'mg.guitools'],
+                      'pillow',
+                      'mg_dataprocessing>=1.0.0',
+                      'mg_pyguitools>=1.0.0'],
                       
-    dependency_links=["https://github.com/mgotz/PyGUITools.git",
-                      "https://github.com/mgotz/PyDataProcessing.git"]
+    dependency_links=["https://github.com/mgotz/PyGUITools/tarball/master#egg=mg_pyguitools-1.0.0",
+                      "https://github.com/mgotz/PyDataProcessing/tarball/master#egg=mg_dataprocessing-1.0.0"],
+                      
+    entry_points = {"gui_scripts":["EBT-evaluation = ebttools.gui.main:run"]}
+
+
 )
