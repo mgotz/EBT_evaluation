@@ -15,6 +15,7 @@ Maybe a future version will also support PyQt5 or PySide, but at the moment this
 
 Download and switch to the extracted directory. Then run 
 > pip install . --process-dependency-links --allow-all-external
+
 This will trigger a depreciation warning, but there is no other way for external dependencies and it has been depreciated but not removed for several years.
 It should install the EBT_evaluation and all its dependencies, including my own modules from github.
 In addition it will create a script/executable called *EBT-evaluation*.
@@ -22,8 +23,10 @@ You can use this script/executable to directly run the GUI, on Linux just call E
 
 If pip is somehow unavailable
 > easy_install .
+
 should also work or
 > python setup.py install
+
 However, pip is most likely to get all the dependencies correctly figured out.
 
 If non of these work, you can also download the dependencies manually and install them.
