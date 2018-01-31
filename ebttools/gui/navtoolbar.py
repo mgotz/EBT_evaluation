@@ -8,13 +8,25 @@ a custom matplotlib toolbar for qt backend
 """
 
 import logging
-import os.path as pathTools
+import os
+#enable compatibility to both pyqt4 and pyqt5 and load the proper modules
+_modname = os.environ.setdefault('QT_API', 'pyqt')
+assert _modname in ('pyqt', 'pyqt5')
 
-from matplotlib.backends.backend_qt4agg \
-  import NavigationToolbar2QT
-from matplotlib import rcParams as mplParams  
-from PyQt4 import QtGui
+try:
+    if os.environ['QT_API'] == 'pyqt5':
+        from PyQt5.QtGui import QIcon
+        from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
+        
+    else:
+        from PyQt4.QtGui import QIcon            
+        from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT
+except ImportError as e:
+    raise ImportError("navtoolbar requires PyQt4 or PyQt5. " 
+                      "QT_API: {!s}".format(os.environ['QT_API']))
 
+
+from matplotlib import rcParams as mplParams
 from matplotlib.backend_tools import Cursors
 cursors = Cursors()
 
@@ -28,12 +40,12 @@ class MyNavigationToolbar(NavigationToolbar2QT):
     #remove unwanted items from the toolbar and make image names into paths
     for text, tooltip_text, image_file, callback in NavigationToolbar2QT.toolitems:
         if text not in ('Subplots', 'Save',None):
-            toolitems.append((text, tooltip_text, pathTools.join(mplParams["datapath"],'images',image_file),callback))
+            toolitems.append((text, tooltip_text, os.path.join(mplParams["datapath"],'images',image_file),callback))
         elif text is None:
             toolitems.append((text, tooltip_text, image_file,callback))
     
     #create a path of the selection icon 
-    iconPath = pathTools.abspath(pathTools.join(pathTools.dirname(__file__),
+    iconPath = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                 "select_icon"))
     #add selection icon and seperator in front of other icons
     toolitems = [("Select","make a slection",iconPath,"select"),(None,None,None,None)]+toolitems
@@ -52,7 +64,7 @@ class MyNavigationToolbar(NavigationToolbar2QT):
    
     #overwrite to remove the joining of paths
     def _icon(self, fullPath):
-        return QtGui.QIcon(fullPath)   
+        return QIcon(fullPath)   
    
     #pretty much a copy of the zoom method from backend_bases
     def select(self):

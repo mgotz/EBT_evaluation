@@ -28,50 +28,42 @@ import os
 import sys
 import traceback
 
-#certain stuff only needed when this is run directly and not as a module
-if __name__ == '__main__':
-    #if not run as main, the module init should ensure proper PyQt and api version
-    
-    #Qt stuff, with API variant that does not use QtVariables like QString but regular
-    #Python variables (saves a lot of conversion headaches)
-    import sip
-    API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
-                 "QVariant")
-    API_VERSION = 2
-    for name in API_NAMES:
-        sip.setapi(name, API_VERSION)
 
-    #make sure other modules use pyqt4 as well (you cant mix qt versions)
-    os.environ["QT_API"] = 'pyqt'
-    
-    #and call out matplotlib in particular
-    from matplotlib import use
-    use("Qt4Agg")
-    
-    #cannot do relative import in a  main
-    sys.path.append(os.path.join(os.path.dirname(__file__),"..",".."))
-    #module with the dose calculation routines
-    from ebttools.core import load_calibrations, DoseArray
-    #my custom toolbar and main ui
-    from ebttools.gui import MyNavigationToolbar, Ui_MainWindow
-    #the dose display window
-    from ebttools.gui.dosewidget import DoseWidget, _advSettings
+try:
+    if os.environ['QT_API'] == 'pyqt5':
+        from PyQt5.QtWidgets import (QMainWindow, QFileDialog, QApplication, 
+                                     QMessageBox)
+        
+        from PyQt5 import QtCore
+        from matplotlib.backends.backend_qt5agg import (FigureCanvas)
+        
+    else:
+        from PyQt4.QtGui import (QMainWindow, QFileDialog, QApplication, 
+                                 QMessageBox)            
+        from PyQt4 import QtCore
+        from matplotlib.backends.backend_qt4agg import (FigureCanvas)
+        
+except ImportError:
+    raise ImportError("dosewidget requires PyQt4 or PyQt5. " 
+                      "QT_API: {!s}".format(os.environ['QT_API']))
+
+#use relative import, this should only ever run as a module
+
+#module with the dose calculation routines
+from ..core import load_calibrations, DoseArray
+#my custom toolbar and main ui
+if os.environ['QT_API'] == 'pyqt5':
+    from .main_ui_qt5 import Ui_MainWindow
 else:
-    #module with the dose calculation routines
-    from ..core import load_calibrations, DoseArray
-    #my custom toolbar and main ui
-    from .main_ui import Ui_MainWindow
-    from .navtoolbar import MyNavigationToolbar
-    #the dose display window
-    from .dosewidget import DoseWidget, _advSettings
+    from .main_ui_qt4 import Ui_MainWindow
+from .navtoolbar import MyNavigationToolbar
+#the dose display window
+from .dosewidget import DoseWidget, _advSettings
 
 #load the Qt bindings
-from PyQt4 import QtCore,QtGui
 
 #load matplotlib for plotting
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt4agg \
-  import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.patches import Rectangle
 
 #image loading functionality
@@ -79,7 +71,6 @@ from PIL import Image
 
 #import my gui helper functions (save, load gui data, gui logger, adv settings)
 from mg import pyguitools
-
         
 #define a list with advanced settings (editable via fromLayout)
 #each list entry is a setting, with the first part as identifier and second as value
@@ -91,7 +82,7 @@ settingsList = [("selection rectangle","red"),
                 ("histogramm max",255)]
 
 
-class MainGui(QtGui.QMainWindow):
+class MainGui(QMainWindow):
     """Main GUI of the EBT evaluation program
     
     Provides a logging window, loads the films and the calibration files.
@@ -101,12 +92,12 @@ class MainGui(QtGui.QMainWindow):
         """Constructor
         """
 
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
 
         # Set up the user interface from Designer.
         self.ui =  Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setDockOptions(QtGui.QMainWindow.AnimatedDocks | QtGui.QMainWindow.AllowNestedDocks)
+        self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowNestedDocks)
         
         #add the logging window by Andreas
         self.log_dock = pyguitools.QtDockLog(datefmt=" ",infoString=False)
@@ -218,9 +209,15 @@ class MainGui(QtGui.QMainWindow):
 
         #check if path is empty and try to get something not empty
         if path == "":
-            path = QtGui.QFileDialog.getSaveFileName(self,'select a file to save to',
-                                                     self.ui.saveTablePath.text(),
-                                                     options = QtGui.QFileDialog.DontConfirmOverwrite)
+            path = QFileDialog.getSaveFileName(self,caption = 'select a file to save to',
+                                               directory = self.ui.saveTablePath.text(),
+                                               filter="Text files (*.txt);;All files (*)",
+                                               options = QFileDialog.DontConfirmOverwrite)
+            
+            #in pyqt5 a tuple is returned, unpack it
+            if os.environ['QT_API'] == 'pyqt5':
+                path, _ = path
+            
             if path == "":
                 return ""
             else:
@@ -234,8 +231,8 @@ class MainGui(QtGui.QMainWindow):
         if os.path.isfile(path):
             title = "path already exists"
             text = path+"already exists, overwrite or append?"
-            overwriteAnswer = QtGui.QMessageBox.question(self,title,text,
-                                                         "append","overwrite","abort")
+            overwriteAnswer = QMessageBox.question(self,title,text,
+                                                   "append","overwrite","abort")
             if overwriteAnswer == 0:
                 return path
             elif overwriteAnswer == 2:
@@ -356,7 +353,7 @@ class MainGui(QtGui.QMainWindow):
         #gets destroyed when its reference is garbage collected
         #make plotWindow a list and append to that if multiple windows should be possible
         title = "histogram of {:s} channel".format(self.ui.channel_selection.currentText())
-        self.plotWindow = pyguitools.simple_plot_window(name = title)
+        self.plotWindow = pyguitools.SimplePlotWindow(name = title)
         self.plotWindow.ax1.hist(self.npImg[self.ui.y0.value():self.ui.y1.value(),
                                             self.ui.x0.value():self.ui.x1.value(), 
                                             channel].flatten(),
@@ -369,9 +366,18 @@ class MainGui(QtGui.QMainWindow):
     def image_file_dialog(self):
         """open dialog to select a scan (browsing)
         """
-        filePath =QtGui.QFileDialog.getOpenFileName(self,'select a scanned image',
-                                                    self.ui.imagePath.text())
-
+        extensionFilter=("TIFF files (*.tiff *.TIFF *.tif *.TIF)"
+                         "Image files (*.tiff *.TIFF *.tif *.jpg *.jpeg *.png *.bmp *.gif);;"
+                         "All files (*)")
+        
+        filePath =QFileDialog.getOpenFileName(self,
+                                              caption = 'select a scanned image',
+                                              directory = self.ui.imagePath.text(),
+                                              filter = extensionFilter)
+        #in pyqt5 a tuple is returned, unpack it
+        if os.environ['QT_API'] == 'pyqt5':
+            filePath, _ = filePath
+            
         if filePath != '':
             self.ui.imagePath.setText(filePath)
             self.image_path_changed()
@@ -496,9 +502,15 @@ class MainGui(QtGui.QMainWindow):
                 logging.info(("info for "+self.ui.filmNumber.text()+" written to file"))
 
     def save_table_file_dialog(self):
-        filePath =QtGui.QFileDialog.getSaveFileName(self,'select a file to save to',
-                                                    self.ui.saveTablePath.text(),
-                                                    options = QtGui.QFileDialog.DontConfirmOverwrite)
+        filePath =QFileDialog.getSaveFileName(self,
+                                              caption = 'select a file to save to',
+                                              directory = self.ui.saveTablePath.text(),
+                                              options = QFileDialog.DontConfirmOverwrite)
+        
+        #in pyqt5 a tuple is returned, unpack it
+        if os.environ['QT_API'] == 'pyqt5':
+            filePath, _ = filePath
+            
         if filePath != '':
             self.ui.saveTablePath.setText(filePath)
             self.save_table_path_changed()
@@ -588,11 +600,8 @@ class MainGui(QtGui.QMainWindow):
 # run
 
 def run():
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     gui = MainGui()
     gui.show()
     sys.exit(app.exec_())
-
-#run the gui
-if __name__ == '__main__':
-    run()         
+     

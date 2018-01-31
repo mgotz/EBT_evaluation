@@ -43,7 +43,7 @@ from __future__ import (print_function, division, absolute_import,
 
 import codecs
 from collections import OrderedDict
-import ConfigParser
+from configparser import ConfigParser
 import logging
 import numpy as np
 import os
@@ -86,7 +86,7 @@ def load_calibrations(path):
         
     for fileName in fileList:
         with codecs.open(os.path.join(path,fileName),"r","utf8") as configFile:
-            config = ConfigParser.ConfigParser()
+            config = ConfigParser()
             config.readfp(configFile)
             for key in config.sections():
                 calibrations[key] = dict(config.items(key))

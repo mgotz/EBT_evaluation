@@ -14,7 +14,7 @@ setup(
     name='ebttools',
     version='1.0.0',
     
-    packages=find_packages(), #automagically include all subfolders as packages
+    packages=find_packages(exclude=("tests")), #automagically include all subfolders as packages, but don't install the tests
     package_data = {"":["*.png"],
 					"ebttools":["calibrations/*"]},
 	

@@ -16,45 +16,38 @@ ideas:
 from __future__ import (print_function, division, absolute_import,
                         unicode_literals)
 
+from collections import OrderedDict
 import logging
 import numpy as np
 import os
 import traceback
 
-import sys
-from collections import OrderedDict
+#enable compatibility to both pyqt4 and pyqt5 and load the proper modules
+try:
+    if os.environ['QT_API'] == 'pyqt5':
+        from PyQt5.QtWidgets import (QWidget, QFileDialog, qApp)
+        
+        from PyQt5 import QtCore
+        from matplotlib.backends.backend_qt5agg import (FigureCanvas, 
+                                                        NavigationToolbar2QT)
+        
+    else:
+        from PyQt4.QtGui import (QWidget, QFileDialog, qApp)            
+        from PyQt4 import QtCore
+        from matplotlib.backends.backend_qt4agg import (FigureCanvas, 
+                                                        NavigationToolbar2QT)
+   
+except ImportError:
+    raise ImportError("dosewidget requires PyQt4 or PyQt5. " 
+                      "QT_API: {!s}".format(os.environ['QT_API']))
 
 #load qt design UI, use relative import if run as a module
-if __name__ == '__main__':
-    #ensure right api version and pyqt version
-    os.environ["QT_API"]="pyqt"
-    import sip
-    API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
-                 "QVariant")
-    API_VERSION = 2
-    for name in API_NAMES:
-        sip.setapi(name, API_VERSION)
-    
-    from matplotlib import use
-    use("Qt4Agg")
-    
-    sys.path.append(os.path.join(sys.path[0],"..",".."))
-    
-    from dosewidget_ui import Ui_DoseWidget
-    from testwindow_ui import Ui_MainWindow
+if os.environ["QT_API"] == "pyqt5":     
+    from .dosewidget_ui_qt5 import Ui_DoseWidget 
 else:
-    from .dosewidget_ui import Ui_DoseWidget
-    from .testwindow_ui import Ui_MainWindow
-
-
-#Qt stuff
-from PyQt4 import QtCore, QtGui
-
-
+    from .dosewidget_ui_qt4 import Ui_DoseWidget 
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt4agg \
-  import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT
 from matplotlib.pyplot import colormaps
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.patches import Ellipse, Rectangle
@@ -62,14 +55,11 @@ from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 from scipy.optimize import curve_fit
 
-
 # simple edit of additional settings
 from mg.pyguitools import EasyEditSettings, SimplePlotWindow
 #2D gauss fitting
 from mg.dataprocessing import (gauss2D, fit_2D_gauss, cross, FitError)
-
-
-    
+#the DoseArray from ebttools provides the core of the backend    
 from ebttools.core import DoseArray
 
 class ScalarFormatterWithUnit(ticker.ScalarFormatter):
@@ -112,7 +102,7 @@ _advSettings = EasyEditSettings([("area stat linecolor","red"),
 _defaultSettings = _advSettings.get_settings()
 
 
-class DoseWidget(QtGui.QWidget):
+class DoseWidget(QWidget):
     """Class to display a dose distribution
     
     The DoseArray provided at construction is displayed in a matplotlib plot
@@ -134,7 +124,7 @@ class DoseWidget(QtGui.QWidget):
             dict should contain
         """
 
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
         
         #save local copy of dose and DPI                    
         self.doseDistribution = doseDistribution
@@ -198,7 +188,7 @@ class DoseWidget(QtGui.QWidget):
         self.ui.y0.valueChanged.connect(self.ROI_value_change)
         self.ui.y1.valueChanged.connect(self.ROI_value_change)
 
-        QtGui.qApp.focusChanged.connect(self.focus_change)
+        qApp.focusChanged.connect(self.focus_change)
         
         #buttons
         self.ui.alternateSpecToggle.stateChanged.connect(self.toggle_ROI_spec)
@@ -768,16 +758,29 @@ class DoseWidget(QtGui.QWidget):
         self.update_marker()
 
     def save_as_numpy(self):
-        self.savePath = QtGui.QFileDialog.getSaveFileName(self,"select a save file",
-                                                          self.savePath)
+        self.savePath = QFileDialog.getSaveFileName(self,
+                                                    caption = "select a save file",
+                                                    directory = self.savePath,
+                                                    filter="Numpy files (*.npy);;All files (*)")
+
+        #in pyqt5 a tuple is returned, unpack it
+        if os.environ['QT_API'] == 'pyqt5':
+            self.savePath, _ = self.savePath
+        
         if self.savePath != "":
             np.save(self.savePath,self.doseDistribution)
         else:
             logging.debug("save canceled")
     
     def save_as_txt(self):
-        self.savePath = QtGui.QFileDialog.getSaveFileName(self,"select a save file",
-                                                          self.savePath)
+        self.savePath = QFileDialog.getSaveFileName(self,
+                                                    caption = "select a save file",
+                                                    directory = self.savePath,
+                                                    filter="Text files (*.txt);;All files (*)")
+
+        #in pyqt5 a tuple is returned, unpack it
+        if os.environ['QT_API'] == 'pyqt5':
+            self.savePath, _ = self.savePath
         if self.savePath != "":
             np.savetxt(self.savePath,self.doseDistribution,delimiter="\t")
         else:
@@ -819,51 +822,3 @@ class DoseWidget(QtGui.QWidget):
             
         self.ROI_value_change()
 
-
-###############################################################################
-# run (for testing purposes)
-class TestGUI(QtGui.QMainWindow):
-    """simple main window to test the widget
-    """
-    def __init__(self):
-        """
-            Constructor
-        """
-
-        QtGui.QMainWindow.__init__(self)
-
-        # Set up the user interface from Designer.
-        self.ui =  Ui_MainWindow()
-        self.ui.setupUi(self) 
-        
-        xDim = 4000 
-        yDim = 4000
-        
-        x,y = np.meshgrid(np.linspace(0,xDim,yDim),np.linspace(0,xDim,yDim))
-        dose = (5.0*np.exp(-np.divide(np.square(x-100),2*50**2)-np.divide(np.square(y-235),2*100**2))
-            +np.random.rand(xDim,yDim)*0.1)
-    
-        dose = dose.view(DoseArray)
-        widget = DoseWidget(dose)
-        
-        self.ui.tabWidget.addTab(widget,"DoseView 1")
-        
-        
-
-
-def run():
-    #setup a basic logger and create a noisy gaussian
-    logging.basicConfig(level=logging.DEBUG)
-
-
-    app = QtGui.QApplication(sys.argv)
-    gui = TestGUI()
-   
-
-#    gui.addDockWidget(QtCore.Qt.BottomDockWidgetArea,doseDock(dose))
-    gui.show()
-    sys.exit(app.exec_())
-
-#run the gui
-if __name__ == '__main__':
-    run()         
