@@ -29,10 +29,11 @@ setup(
                       'scipy',
                       'numpy',
                       'pillow',
+                      'configparser;python_version<"3.2"',
                       'mg_dataprocessing>=1.0.0',
-                      'mg_pyguitools>=1.0.0'],
+                      'mg_pyguitools>=1.1.1'],
                       
-    dependency_links=["https://github.com/mgotz/PyGUITools/tarball/master#egg=mg_pyguitools-1.0.0",
+    dependency_links=["https://github.com/mgotz/PyGUITools/tarball/master#egg=mg_pyguitools-1.1.1",
                       "https://github.com/mgotz/PyDataProcessing/tarball/master#egg=mg_dataprocessing-1.0.0"],
                       
     entry_points = {"gui_scripts":["EBT-evaluation = ebttools.gui.main:run"]}

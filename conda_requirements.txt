@@ -1,0 +1,7 @@
+matplotlib>=2.0.0
+scipy>=0.18.1
+numpy>=1.12.1
+pillow>=5.0.0
+pyqt>=5.0
+sip>=4.0.0
+future>=0.16.0
