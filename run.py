@@ -1,15 +1,13 @@
 #! /bin/python
 # -*- coding: utf-8 -*-
 """
-Created on Sat Aug 12 21:02:24 2017
-
-@author: Malte
+Use this script to execute the EBT evaluation GUI
 """
 
 import os
 import sys
 
-sys.path.append(os.path.dirname(__file__))
+sys.path.insert(0,(os.path.dirname(__file__)))
 
 from ebttools.gui.main import run
 

@@ -186,7 +186,7 @@ class MainGui(QMainWindow):
     def load_settings(self):
         """load the setting of the GUI (called on startup)
         """
-        #create a QSettings object from ini file
+        #create a QSettings object to store the settings
         self.QtSettings=QtCore.QSettings("OncoRay","EBT Evaluation")
         #self.QtSettings=QtCore.QSettings("settings.ini",QtCore.QSettings.IniFormat)
 
@@ -397,7 +397,6 @@ class MainGui(QMainWindow):
         except (IOError, OSError) as e:
             logging.error("failed to open file: "+str(e))
             return ()
- 
 
         #check the format of the loaded image and adjust the input field accordingly
         logging.debug("image mode: "+img.mode)
@@ -448,9 +447,52 @@ class MainGui(QMainWindow):
 
              
         
+
+        
+        #check for dpi info
+        try:
+            dpi = img.info['dpi']
+            
+            #try string conversion and tuple first and then deal with type of number
+            if type(dpi) == str:
+                try:
+                    dpi = float(dpi)
+                except ValueError:
+                    logging.warning("Can not parse dpi info: "+dpi)
+                    dpi = 0
+            elif type(dpi) == tuple:
+                if len(dpi) == 1:
+                    dpi = dpi[0]
+                elif len(dpi) == 2:
+                    if dpi[0] == dpi[1]:
+                        dpi = dpi[0]
+                    else:
+                        logging.warning("different DPI for the two dimensions found " +
+                                        repr(dpi)+ " THIS IS NOT SUPPORTED")
+                        dpi = 0
+                else:
+                    logging.warning("dpi has more than 2 dimensions" +
+                                    repr(dpi)+ " DONT KNOW WHAT TO DO")
+                    dpi=0
+            
+            try:
+                dpi = float(dpi)
+                if not dpi.is_integer():
+                    logging.warning("non integer DPI of {:.4f} is not supported".format(dpi))
+            except TypeError: #unkown type of dpi
+                logging.warning("Can not parse dpi info: "+repr(dpi))
+                dpi = 0
+        except KeyError:
+            logging.debug("no dpi info")
+            dpi=0
+
         logging.debug("loaded image of dimensions: "+str(self.npImg.shape)+
-                      " and type: "+str(self.npImg.dtype))
-                      
+                      " and type: "+str(self.npImg.dtype)+
+                      ", with DPI: "+str(dpi))
+            
+        if dpi > 0:
+            self.ui.DPI.setValue(int(dpi))
+              
         #adjust UI elements to image properties
         self.ui.x0.setMaximum(self.npImg.shape[1])
         self.ui.x0.setValue(0)
@@ -522,20 +564,26 @@ class MainGui(QMainWindow):
         self.saveTablePath = self.check_save_table_path(self.ui.saveTablePath.text())
 
     def selection_changed(self):
-        #try to remove old marker
+        #the point here is to redraw the marker as efficiently as possible, i.e.
+        #change as little of the existing plot as possible
+        
+        #try to update the old marker
         try:
-            self.selectionMarker.remove()
+            self.selectionMarker.set_bounds(self.ui.x0.value(),self.ui.y0.value(),
+                                            self.ui.x1.value()-self.ui.x0.value(),
+                                            self.ui.y1.value()-self.ui.y0.value())
+            self.subplot.draw_artist(self.selectionMarker)
         except AttributeError:
-            pass
+        #marker does not exist, create a new rectangle marker and draw it
+            rect = Rectangle((self.ui.x0.value(),self.ui.y0.value()),
+                             self.ui.x1.value()-self.ui.x0.value(),
+                             self.ui.y1.value()-self.ui.y0.value(),
+                             fill=False,color=self.settings["selection rectangle"],
+                             linewidth=2.0)
+            self.selectionMarker = self.subplot.add_artist(rect)
 
-        #create a rectangle marker and draw it
-        rect = Rectangle((self.ui.x0.value(),self.ui.y0.value()),
-                         self.ui.x1.value()-self.ui.x0.value(),
-                         self.ui.y1.value()-self.ui.y0.value(),
-                         fill=False,color=self.settings["selection rectangle"],
-                         linewidth=2.0)
-        self.selectionMarker = self.subplot.add_artist(rect)
-        self.canvas.draw()        
+        self.canvas.draw()
+        self.canvas.flush_events()        
 
     def show_dose(self):
         logging.debug("calculating dose")

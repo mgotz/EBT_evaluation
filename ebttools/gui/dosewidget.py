@@ -82,14 +82,12 @@ class ScalarFormatterWithUnit(ticker.ScalarFormatter):
 def gauss(x, A, x0, sigma, offset):
     return A*np.exp(-np.square(x-x0)/(2*sigma**2))+offset
 
-#define possibilities for color maps and check their availability on 
-#the current installation
+#define possibilities for color maps and filter for their availability
+#on the current installation
 colorMapChoices = ["inferno","viridis","hot","gnuplot","spectral","jet",
                    "rainbow","gray","seismic"]
 
-for cmap in colorMapChoices:
-    if cmap not in colormaps():
-        colorMapChoices.remove(cmap)
+colorMapChoices = [cmap for cmap in colorMapChoices if cmap in colormaps()]
 
 _advSettings = EasyEditSettings([("area stat linecolor","red"),
                                  ("area stat linewidth",2.0),
@@ -732,7 +730,6 @@ class DoseWidget(QWidget):
     #catch if the focus leaves or enters a certain widget and connect matplotlib
     #button press callbacks accordingly
     def focus_change(self, old, new):
-        
         if (old == self.ui.xCenter or old == self.ui.yCenter or 
             old == self.ui.x0 or old == self.ui.y0 or 
             old == self.ui.x1 or old == self.ui.y1):

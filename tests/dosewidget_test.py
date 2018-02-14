@@ -13,6 +13,8 @@ import numpy as np
 import os
 import sys
 
+os.environ["QT_API"] = "pyqt5"
+
 #add base to path and load
 sys.path.append(os.path.join(sys.path[0],".."))
 from ebttools.gui.dosewidget import DoseWidget
@@ -45,8 +47,8 @@ class TestGUI(QMainWindow):
         self.ui =  Ui_MainWindow()
         self.ui.setupUi(self) 
         
-        xDim = 4000 
-        yDim = 4000
+        xDim = 470 
+        yDim = 470
         
         #create a noise gaussian for test data
         x,y = np.meshgrid(np.linspace(0,xDim,yDim),np.linspace(0,xDim,yDim))

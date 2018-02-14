@@ -27,7 +27,16 @@ except ImportError as e:
 
 
 from matplotlib import rcParams as mplParams
-from matplotlib.backend_tools import Cursors
+from matplotlib import __version__ as mplVersion
+
+mplAbove1_5 = not ((int(mplVersion.split(".")[0]) < 2) and 
+                   (int(mplVersion.split(".")[1]) < 5))
+
+#in older matplotlib (<2 I believe) Cursors is in backend_bases, not it is in backend tools
+try:
+    from matplotlib.backend_tools import Cursors
+except:
+    from matplotlib.backend_bases import Cursors
 cursors = Cursors()
 
 class MyNavigationToolbar(NavigationToolbar2QT):
@@ -210,10 +219,14 @@ class MyNavigationToolbar(NavigationToolbar2QT):
         for selection_id in self._ids_selection:
             self.canvas.mpl_disconnect(selection_id)                                                              
         self.release(event)
-        self.draw()
+        if mplAbove1_5:
+            self.remove_rubberband()
+
         self._selectionStart = None
         self._button_pressed = None
         self._ids_selection = []
+        
+        
         
         #fire event
         self.canvas.callbacks.process("selection_changed")

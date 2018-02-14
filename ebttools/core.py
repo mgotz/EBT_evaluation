@@ -43,12 +43,22 @@ from __future__ import (print_function, division, absolute_import,
 
 import codecs
 from collections import OrderedDict
-from configparser import ConfigParser
+
 import logging
 import numpy as np
 import os
 import scipy.ndimage
 from math import floor, ceil
+
+try:
+    from configparser import ConfigParser
+except ImportError as e:
+    #a compatibility hack for python2 if it does not have conifgparser
+    import sys
+    if sys.version_info[0] == 2:
+        from ConfigParser import ConfigParser
+    else:
+        raise e
 
 #define which array index corresponds to which color
 rgbMap = {"red":0,"green":1,"blue":2}
@@ -276,9 +286,9 @@ class DoseArray(np.ndarray):
         y0 : scalar
             y-value of rectangle center (in cm)
         width : scalar
-            width (x-dimension) of the rectangle
+            half-width (x-dimension) of the rectangle
         height : scalar
-            height (y-dimension) of the rectangle
+            half-height (y-dimension) of the rectangle
         angle : scalar, optional
             counter clockwise rotation angle of the rectangle
         test : bool, optional
@@ -287,7 +297,7 @@ class DoseArray(np.ndarray):
         Returns
         -------
         mask : ndarray
-            a mask to index the array an return a rectangular area
+            a mask to index the array and return a rectangular area
         """
         
         angle_rad = angle*np.pi/180.
@@ -298,7 +308,8 @@ class DoseArray(np.ndarray):
         #must be shifted by 0.5 pixels width.
         y, x = np.mgrid[-y0+0.5/self.DPC:(self.shape[0]+.5)/self.DPC-y0:1.0/self.DPC,
                         -x0+0.5/self.DPC:(self.shape[1]+.5)/self.DPC-x0:1.0/self.DPC]
-                
+        
+       
         #condition for a rectangle
         mask = np.logical_and(np.abs(x*np.cos(angle_rad)-y*np.sin(angle_rad)) <= width,
                               np.abs(x*np.sin(angle_rad)+y*np.cos(angle_rad)) <= height)
@@ -318,9 +329,9 @@ class DoseArray(np.ndarray):
         y0 : scalar
             y-value of rectangle center (in cm)
         width : scalar
-            width (x-dimension) of the rectangle
+            half-width (x-dimension) of the rectangle
         height : scalar
-            height (y-dimension) of the rectangle
+            half-height (y-dimension) of the rectangle
         angle : scalar, optional
             counter clockwise rotation angle of the rectangle
         test : bool, optional
@@ -459,7 +470,7 @@ class DoseArray(np.ndarray):
 # for testing
 if __name__ == '__main__':
     #load some calibrations
-    calibs = load_calibrations(os.path.join(os.path.curdir,"Calibration"))
+    calibs = load_calibrations(os.path.join(os.path.abspath(os.path.curdir),"calibrations"))
     #create a simple scan (~4x4 cm)
     scan = np.zeros((470,470,3),dtype="uint8")
 
@@ -470,6 +481,8 @@ if __name__ == '__main__':
                    +200+np.random.rand(470,470)*5.0)
 
     doseDistribution = DoseArray(300.,calibs["example"],scan,255)
+    
+    doseDistribution.rectangle_stats(1.0,1.0,0.5,0.5,0.,True)
     
     mask = doseDistribution.rectangle_mask(0.4,0.5,0.2,0.1,0.0)
     print (doseDistribution[mask].shape)
