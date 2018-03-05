@@ -66,3 +66,31 @@ background = 0.0
 p1 = 6.58225
 p2 = 11.20321
 p3 = 1.61734
+
+[EBT 3 proton plateau Lot04181701]
+tooltip = single channel calibration for lot 04181701 in plateau of proton beam from 09.06.2017
+
+channel = red
+argument = netOD
+function = exp_poly
+
+
+unit = Gy
+
+p1 = 6.11443 
+p2 = 9.4133
+p3 = 1.49956
+
+[EBT 3 proton SOBP Lot04181701]
+tooltip = single channel calibration for lot 04181701 in SOBP  of proton beam from 09.06.2017
+
+channel = red
+argument = netOD
+function = exp_poly
+
+
+unit = Gy
+
+p1 = 4.55872
+p2 = 11.17996
+p3 = 1.38082
