@@ -1,4 +1,4 @@
-#! /bin/python
+#!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 """
 Use this script to execute the EBT evaluation GUI
