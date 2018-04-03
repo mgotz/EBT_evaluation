@@ -630,18 +630,27 @@
      <x>0</x>
      <y>0</y>
      <width>852</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMenu">
     <property name="title">
      <string>Menu</string>
     </property>
+    <widget class="QMenu" name="persistentDoseViewMenu">
+     <property name="title">
+      <string>Persistent Dose View</string>
+     </property>
+     <addaction name="actionSave_Dose_View_Values"/>
+     <addaction name="actionUse_Saved_Values"/>
+    </widget>
     <addaction name="actionShow_Scan"/>
     <addaction name="actionShow_Log"/>
     <addaction name="separator"/>
     <addaction name="actionScan_View_Settings"/>
     <addaction name="actionDose_View_Settings"/>
+    <addaction name="separator"/>
+    <addaction name="persistentDoseViewMenu"/>
     <addaction name="separator"/>
     <addaction name="actionClose"/>
    </widget>
@@ -671,6 +680,30 @@
   <action name="actionDose_View_Settings">
    <property name="text">
     <string>Dose View Settings</string>
+   </property>
+  </action>
+  <action name="actionUse_saved_settings">
+   <property name="text">
+    <string>use saved settings</string>
+   </property>
+  </action>
+  <action name="actionUse_Saved_Values">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>use saved values</string>
+   </property>
+   <property name="toolTip">
+    <string>use the stored values to prefill the fields in newly created dose views</string>
+   </property>
+  </action>
+  <action name="actionSave_Dose_View_Values">
+   <property name="text">
+    <string>save current values</string>
    </property>
   </action>
  </widget>

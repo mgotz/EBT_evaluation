@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'FilmScanMain_QtDesign.ui'
+# Form implementation generated from reading ui file 'main_QtDesign.ui'
 #
-# Created: Wed Jun 28 16:44:20 2017
-#      by: PyQt4 UI code generator 4.11.2
+# Created by: PyQt4 UI code generator 4.11.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -44,12 +43,10 @@ class Ui_MainWindow(object):
         self.layoutWidget = QtGui.QWidget(self.splitter)
         self.layoutWidget.setObjectName(_fromUtf8("layoutWidget"))
         self.imageLayout = QtGui.QVBoxLayout(self.layoutWidget)
-        self.imageLayout.setMargin(0)
         self.imageLayout.setObjectName(_fromUtf8("imageLayout"))
         self.layoutWidget1 = QtGui.QWidget(self.splitter)
         self.layoutWidget1.setObjectName(_fromUtf8("layoutWidget1"))
         self.verticalLayout_4 = QtGui.QVBoxLayout(self.layoutWidget1)
-        self.verticalLayout_4.setMargin(0)
         self.verticalLayout_4.setObjectName(_fromUtf8("verticalLayout_4"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
         self.horizontalLayout_2.setContentsMargins(0, 0, -1, -1)
@@ -189,7 +186,6 @@ class Ui_MainWindow(object):
         self.line.setFrameShadow(QtGui.QFrame.Sunken)
         self.line.setLineWidth(5)
         self.line.setFrameShape(QtGui.QFrame.HLine)
-        self.line.setFrameShadow(QtGui.QFrame.Sunken)
         self.line.setObjectName(_fromUtf8("line"))
         self.verticalLayout_4.addWidget(self.line)
         self.label_14 = QtGui.QLabel(self.layoutWidget1)
@@ -273,10 +269,12 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 852, 19))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 852, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuMenu = QtGui.QMenu(self.menubar)
         self.menuMenu.setObjectName(_fromUtf8("menuMenu"))
+        self.persistentDoseViewMenu = QtGui.QMenu(self.menuMenu)
+        self.persistentDoseViewMenu.setObjectName(_fromUtf8("persistentDoseViewMenu"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -291,11 +289,23 @@ class Ui_MainWindow(object):
         self.actionShow_Log.setObjectName(_fromUtf8("actionShow_Log"))
         self.actionDose_View_Settings = QtGui.QAction(MainWindow)
         self.actionDose_View_Settings.setObjectName(_fromUtf8("actionDose_View_Settings"))
+        self.actionUse_saved_settings = QtGui.QAction(MainWindow)
+        self.actionUse_saved_settings.setObjectName(_fromUtf8("actionUse_saved_settings"))
+        self.actionUse_Saved_Values = QtGui.QAction(MainWindow)
+        self.actionUse_Saved_Values.setCheckable(True)
+        self.actionUse_Saved_Values.setChecked(False)
+        self.actionUse_Saved_Values.setObjectName(_fromUtf8("actionUse_Saved_Values"))
+        self.actionSave_Dose_View_Values = QtGui.QAction(MainWindow)
+        self.actionSave_Dose_View_Values.setObjectName(_fromUtf8("actionSave_Dose_View_Values"))
+        self.persistentDoseViewMenu.addAction(self.actionSave_Dose_View_Values)
+        self.persistentDoseViewMenu.addAction(self.actionUse_Saved_Values)
         self.menuMenu.addAction(self.actionShow_Scan)
         self.menuMenu.addAction(self.actionShow_Log)
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionScan_View_Settings)
         self.menuMenu.addAction(self.actionDose_View_Settings)
+        self.menuMenu.addSeparator()
+        self.menuMenu.addAction(self.persistentDoseViewMenu.menuAction())
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionClose)
         self.menubar.addAction(self.menuMenu.menuAction())
@@ -369,9 +379,14 @@ class Ui_MainWindow(object):
         self.showDose_button.setText(_translate("MainWindow", "show dose", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.scanTab), _translate("MainWindow", "scan view", None))
         self.menuMenu.setTitle(_translate("MainWindow", "Menu", None))
+        self.persistentDoseViewMenu.setTitle(_translate("MainWindow", "Persistent Dose View", None))
         self.actionClose.setText(_translate("MainWindow", "Close", None))
         self.actionScan_View_Settings.setText(_translate("MainWindow", "Scan View Setting", None))
         self.actionShow_Scan.setText(_translate("MainWindow", "Show Scan Tab", None))
         self.actionShow_Log.setText(_translate("MainWindow", "Show Log", None))
         self.actionDose_View_Settings.setText(_translate("MainWindow", "Dose View Settings", None))
+        self.actionUse_saved_settings.setText(_translate("MainWindow", "use saved settings", None))
+        self.actionUse_Saved_Values.setText(_translate("MainWindow", "use saved values", None))
+        self.actionUse_Saved_Values.setToolTip(_translate("MainWindow", "use the stored values to prefill the fields in newly created dose views", None))
+        self.actionSave_Dose_View_Values.setText(_translate("MainWindow", "save current values", None))
 

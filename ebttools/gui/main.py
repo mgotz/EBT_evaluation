@@ -128,6 +128,7 @@ class MainGui(QMainWindow):
         self.ui.actionShow_Scan.triggered.connect(self.show_scan)
         self.ui.actionScan_View_Settings.triggered.connect(self.change_advSettings)
         self.ui.actionDose_View_Settings.triggered.connect(self.change_doseViewSettings)
+        self.ui.actionSave_Dose_View_Values.triggered.connect(self.save_doseView_values)
         #value changes
         self.ui.x0.valueChanged.connect(self.selection_changed)
         self.ui.x1.valueChanged.connect(self.selection_changed)
@@ -509,40 +510,55 @@ class MainGui(QMainWindow):
 
     def save_calib_data(self):
         """save the average of each channel in the selection area to a file"""
+        
+        #get data to save
         x0 = self.ui.x0.value()
         x1 = self.ui.x1.value()
         y0 = self.ui.y0.value()
         y1 = self.ui.y1.value()
         
         directory, fileName = os.path.split(self.ui.imagePath.text())
-        
-        saveStr = self.ui.filmNumber.text()
-        saveStr += "\t"+fileName
-        
-        #save coordinates
-        saveStr += "\t{:d}\t{:d}\t{:d}\t{:d}".format(x0,y0,x1,y1)
-        #save area in pixels
         nofpixels = (max(x0,x1)-min(x0,x1))*(max(y0,y1)-min(y0,y1))
-        saveStr += "\t{:d}".format(nofpixels)        
+
+        #create a list with everything to be saved 
+        #(fast way in Python to build a string)
+        strList = [self.ui.filmNumber.text(),#indentifier
+                   fileName, #file name
+                   "{:d}".format(x0),#coordinates
+                   "{:d}".format(y0),
+                   "{:d}".format(x1),
+                   "{:d}".format(y1),
+                   "{:d}".format(nofpixels)]        
         
+       
         #save the channel data
         for channel in [0,1,2]:
             avg = np.average(self.npImg[y0:y1,x0:x1,channel])
             std = np.std(self.npImg[y0:y1,x0:x1,channel])
-            saveStr += "\t{:.3f}".format(avg)
-            saveStr += "\t{:.3f}".format(std)
-        
-        saveStr += "\n"        
+            strList.append("{:.3f}".format(avg))
+            strList.append("{:.3f}".format(std))
+
+        #concatenate the list, using tab as a seperator
+        saveStr = '\t'.join(strList)+"\n"
         
         self.saveTablePath = self.check_save_table_path(self.ui.saveTablePath.text())
         
         if self.saveTablePath == "":
-            logging.warning("nothing written to file")
+            logging.error("no valid file selected, nothing written")
         else:
             with open(self.saveTablePath,"a") as saveTable:
                 saveTable.write(saveStr)
                 logging.info(("info for "+self.ui.filmNumber.text()+" written to file"))
 
+    def save_doseView_values(self):
+        currentWidget = self.ui.tabWidget.currentWidget()
+        if isinstance(currentWidget, DoseWidget):
+            currentWidget.save_ui_values()
+            tabName = self.ui.tabWidget.tabText(self.ui.tabWidget.currentIndex())
+            logging.info("save field values from "+tabName)
+        else:
+            logging.error("please select as dose tab")
+        
     def save_table_file_dialog(self):
         filePath =QFileDialog.getSaveFileName(self,
                                               caption = 'select a file to save to',
@@ -591,26 +607,45 @@ class MainGui(QMainWindow):
         try:
             #get the phi0 value from all currently allowed fields
             phi0 = []
-            for inputField in [self.ui.phi0Ch1, self.ui.phi0Ch2, self.ui.phi0Ch3]:
+            for inputField in (self.ui.phi0Ch1, self.ui.phi0Ch2, self.ui.phi0Ch3):
                 if inputField.isEnabled():
                     phi0.append(inputField.value())
+            
+            #get the selection
+            y0 = self.ui.y0.value()
+            y1 = self.ui.y1.value()     
+            x0 = self.ui.x0.value()
+            x1 = self.ui.x1.value()
             
             #undo the  dimension expansion for grey scale images
             if self.ui.channel_selection.count() == 1:
                 doseDistribution = DoseArray(self.ui.DPI.value(),
                                              self.ui.calibration_selection.itemData(idx),
-                                             self.npImg[self.ui.y0.value():self.ui.y1.value(),
-                                                        self.ui.x0.value():self.ui.x1.value()],
+                                             self.npImg[y0:y1,x0:x1],
                                              phi0)
             else:
                 doseDistribution = DoseArray(self.ui.DPI.value(),
                                              self.ui.calibration_selection.itemData(idx),
-                                             self.npImg[self.ui.y0.value():self.ui.y1.value(),
-                                                        self.ui.x0.value():self.ui.x1.value(),
-                                                        :],
+                                             self.npImg[y0:y1,x0:x1,:],
                                              phi0)
-            self.tabCounter += 1  
-            index = self.ui.tabWidget.addTab(DoseWidget(doseDistribution,settings=self.doseViewSettings.get_settings()),
+            #aggregate the settings to inform the dosewidget of them
+            directory, fileName = os.path.split(self.ui.imagePath.text())
+            calculationSettings = {"calibration":self.ui.calibration_selection.itemText(idx),
+                                   "DPI":self.ui.DPI.value(),
+                                   "x0":x0,
+                                   "y0":y0,
+                                   "x1":x1,
+                                   "y1":y1,
+                                   "fileName":fileName}
+            for i, value in enumerate(phi0):
+                calculationSettings["phi0_ch{:d}".format(i+1)] = value
+                
+            self.tabCounter += 1
+
+            index = self.ui.tabWidget.addTab(DoseWidget(doseDistribution,
+                                                        settings=self.doseViewSettings.get_settings(),
+                                                        calculationSettings=calculationSettings,
+                                                        loadUI=self.ui.actionUse_Saved_Values.isChecked()),
                                              "dose view {:d}".format(self.tabCounter))
             self.ui.tabWidget.setCurrentIndex(index)
 

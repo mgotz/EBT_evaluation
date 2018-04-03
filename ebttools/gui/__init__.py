@@ -1,15 +1,23 @@
 import os
+import warnings
 
 defaultAPI = 'pyqt'
 
 #ensure API v2 for pyqt (native python data types) pyqt5 only offers this API
 #hopefully setting it for PyQt5 does not cause errors
 import sip
-API_NAMES = ("QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", 
-			 "QVariant")
+RequiredAPINames = ("QVariant","QString") #those I definitly use
+OptionalAPINames = ("QDate", "QDateTime", "QTextStream", "QTime", "QUrl") #those I may in the future
+
 API_VERSION = 2
-for name in API_NAMES:
+
+for name in RequiredAPINames:
 	sip.setapi(name, API_VERSION)
+for name in OptionalAPINames:
+    try:
+        sip.setapi(name, API_VERSION)
+    except ValueError:
+        warnings.warn("failed to set {!s} to API v2".format(name),ImportWarning)
 
 #check whether an environment variable is set to choose pyqt version.
 #If not try what is installed and set the default

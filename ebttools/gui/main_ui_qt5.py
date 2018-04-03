@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_QtDesign.ui'
 #
-# Created by: PyQt5 UI code generator 5.9
+# Created by: PyQt5 UI code generator 5.6
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -22,6 +22,7 @@ class Ui_MainWindow(object):
         self.scanTab = QtWidgets.QWidget()
         self.scanTab.setObjectName("scanTab")
         self.gridLayout_3 = QtWidgets.QGridLayout(self.scanTab)
+        self.gridLayout_3.setContentsMargins(0, 0, 0, 0)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.splitter = QtWidgets.QSplitter(self.scanTab)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
@@ -257,10 +258,12 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 852, 19))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 852, 21))
         self.menubar.setObjectName("menubar")
         self.menuMenu = QtWidgets.QMenu(self.menubar)
         self.menuMenu.setObjectName("menuMenu")
+        self.persistentDoseViewMenu = QtWidgets.QMenu(self.menuMenu)
+        self.persistentDoseViewMenu.setObjectName("persistentDoseViewMenu")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -275,11 +278,23 @@ class Ui_MainWindow(object):
         self.actionShow_Log.setObjectName("actionShow_Log")
         self.actionDose_View_Settings = QtWidgets.QAction(MainWindow)
         self.actionDose_View_Settings.setObjectName("actionDose_View_Settings")
+        self.actionUse_saved_settings = QtWidgets.QAction(MainWindow)
+        self.actionUse_saved_settings.setObjectName("actionUse_saved_settings")
+        self.actionUse_Saved_Values = QtWidgets.QAction(MainWindow)
+        self.actionUse_Saved_Values.setCheckable(True)
+        self.actionUse_Saved_Values.setChecked(False)
+        self.actionUse_Saved_Values.setObjectName("actionUse_Saved_Values")
+        self.actionSave_Dose_View_Values = QtWidgets.QAction(MainWindow)
+        self.actionSave_Dose_View_Values.setObjectName("actionSave_Dose_View_Values")
+        self.persistentDoseViewMenu.addAction(self.actionSave_Dose_View_Values)
+        self.persistentDoseViewMenu.addAction(self.actionUse_Saved_Values)
         self.menuMenu.addAction(self.actionShow_Scan)
         self.menuMenu.addAction(self.actionShow_Log)
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionScan_View_Settings)
         self.menuMenu.addAction(self.actionDose_View_Settings)
+        self.menuMenu.addSeparator()
+        self.menuMenu.addAction(self.persistentDoseViewMenu.menuAction())
         self.menuMenu.addSeparator()
         self.menuMenu.addAction(self.actionClose)
         self.menubar.addAction(self.menuMenu.menuAction())
@@ -354,9 +369,14 @@ class Ui_MainWindow(object):
         self.showDose_button.setText(_translate("MainWindow", "show dose"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.scanTab), _translate("MainWindow", "scan view"))
         self.menuMenu.setTitle(_translate("MainWindow", "Menu"))
+        self.persistentDoseViewMenu.setTitle(_translate("MainWindow", "Persistent Dose View"))
         self.actionClose.setText(_translate("MainWindow", "Close"))
         self.actionScan_View_Settings.setText(_translate("MainWindow", "Scan View Setting"))
         self.actionShow_Scan.setText(_translate("MainWindow", "Show Scan Tab"))
         self.actionShow_Log.setText(_translate("MainWindow", "Show Log"))
         self.actionDose_View_Settings.setText(_translate("MainWindow", "Dose View Settings"))
+        self.actionUse_saved_settings.setText(_translate("MainWindow", "use saved settings"))
+        self.actionUse_Saved_Values.setText(_translate("MainWindow", "use saved values"))
+        self.actionUse_Saved_Values.setToolTip(_translate("MainWindow", "use the stored values to prefill the fields in newly created dose views"))
+        self.actionSave_Dose_View_Values.setText(_translate("MainWindow", "save current values"))
 

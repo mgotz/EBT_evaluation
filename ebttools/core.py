@@ -51,12 +51,12 @@ import scipy.ndimage
 from math import floor, ceil
 
 try:
-    from configparser import ConfigParser
+    from configparser import ConfigParser, MissingSectionHeaderError
 except ImportError as e:
     #a compatibility hack for python2 if it does not have conifgparser
     import sys
     if sys.version_info[0] == 2:
-        from ConfigParser import ConfigParser
+        from ConfigParser import ConfigParser, MissingSectionHeaderError
     else:
         raise e
 
@@ -96,10 +96,15 @@ def load_calibrations(path):
         
     for fileName in fileList:
         with codecs.open(os.path.join(path,fileName),"r","utf8") as configFile:
-            config = ConfigParser()
-            config.readfp(configFile)
-            for key in config.sections():
-                calibrations[key] = dict(config.items(key))
+            try:
+                config = ConfigParser()
+                config.readfp(configFile)
+                for key in config.sections():
+                    calibrations[key] = dict(config.items(key))
+            except MissingSectionHeaderError:
+                logging.warning("{!s} not a readable calibration".format(fileName))
+            except UnicodeDecodeError:
+                logging.warning("{!s} not a readable utf-8 calibration".format(fileName))
           
     if len(calibrations) == 0:
         raise IOError(255,"files contain no readable calibration",path)
@@ -370,9 +375,9 @@ class DoseArray(np.ndarray):
         y0 : scalar
             y-value of ellipse center (in cm)
         a : scalar
-            half-axies in x-direction
+            half-axis in x-direction
         b : scalar
-            half-axies in y-direction
+            half-axis in y-direction
         angle : scalar, optional
             counter clockwise rotation angle of the ellipse
         test : bool, optional

@@ -28,14 +28,12 @@ try:
         from PyQt5.QtWidgets import (QWidget, QFileDialog, qApp)
         
         from PyQt5 import QtCore
-        from matplotlib.backends.backend_qt5agg import (FigureCanvas, 
-                                                        NavigationToolbar2QT)
+        from matplotlib.backends.backend_qt5agg import FigureCanvas
         
     else:
         from PyQt4.QtGui import (QWidget, QFileDialog, qApp)            
         from PyQt4 import QtCore
-        from matplotlib.backends.backend_qt4agg import (FigureCanvas, 
-                                                        NavigationToolbar2QT)
+        from matplotlib.backends.backend_qt4agg import FigureCanvas
    
 except ImportError:
     raise ImportError("dosewidget requires PyQt4 or PyQt5. " 
@@ -46,17 +44,17 @@ if os.environ["QT_API"] == "pyqt5":
     from .dosewidget_ui_qt5 import Ui_DoseWidget 
 else:
     from .dosewidget_ui_qt4 import Ui_DoseWidget 
+from .navtoolbar import MyNavigationToolbar
 
 from matplotlib.figure import Figure
-from matplotlib.pyplot import colormaps
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.patches import Ellipse, Rectangle
 from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 from scipy.optimize import curve_fit
 
-# simple edit of additional settings
-from mg.pyguitools import EasyEditSettings, SimplePlotWindow
+# simple edit of additional settings and gui helper functions
+from mg.pyguitools import EasyEditSettings, SimplePlotWindow, gui_save, gui_restore
 #2D gauss fitting
 from mg.dataprocessing import (gauss2D, fit_2D_gauss, cross, FitError)
 #the DoseArray from ebttools provides the core of the backend    
@@ -84,13 +82,24 @@ def gauss(x, A, x0, sigma, offset):
 
 #define possibilities for color maps and filter for their availability
 #on the current installation
-colorMapChoices = ["inferno","viridis","hot","gnuplot","spectral","jet",
+import matplotlib.cm as cm
+  
+possibleCmapChoices = ["inferno","viridis","hot","gnuplot","spectral","jet",
                    "rainbow","gray","seismic"]
 
-colorMapChoices = [cmap for cmap in colorMapChoices if cmap in colormaps()]
+colorMapChoices = []
+for cmap in possibleCmapChoices:
+    try:
+        cm.get_cmap(cmap)
+        colorMapChoices.append(cmap)
+    except ValueError:
+        pass
 
 _advSettings = EasyEditSettings([("area stat linecolor","red"),
                                  ("area stat linewidth",2.0),
+                                 ("isodose color","yellow"),
+                                 ("isodose linewidth",2.0),
+                                 ("isodose fontsize",14),
                                  ("label axes",True), 
                                  ("color map",[0]+colorMapChoices),
                                  ("show grid",False),
@@ -109,7 +118,8 @@ class DoseWidget(QWidget):
     In addition it provides GUI interfaces to calculate and fit aspects of the
     dose distribution by calling the methods of the DoseArray.
     """
-    def __init__(self, doseDistribution, settings=_defaultSettings):
+    def __init__(self, doseDistribution, settings=_defaultSettings, 
+                 calculationSettings = None, loadUI = False):
         """Constructor
         
         Parameters
@@ -120,13 +130,18 @@ class DoseWidget(QWidget):
             _defaultSettings is a dict of the settings used here, constructed
             using the EasyEditSettings. See the _advSettings as to what keys the
             dict should contain
+        calculationData : dict, optional
+            should contain the settings used to calculate the doseDistribution
+            from a film. It will be saved using the dict_keys as headers
+        loadUI: bool, optional
+            load saved ui settings
         """
 
         QWidget.__init__(self)
         
-        #save local copy of dose and DPI                    
+        #save local copy of dose                
         self.doseDistribution = doseDistribution
-#        self.DPC = DPI/2.54
+        self.calculationSettings = calculationSettings
 
         # Set up the user interface from Designer.
         self.ui =  Ui_DoseWidget()
@@ -169,6 +184,9 @@ class DoseWidget(QWidget):
             self.ui.evalFunction.setItemData(idx,functions[key]["tip"],
                                              QtCore.Qt.ToolTipRole)
         
+        #load UI before connecting slots to avoid needless on change firing
+        if loadUI:
+            self.load_ui_values()
         #matplotlib frame setup
         self.create_mplframe()
         self.make_dose_plot()
@@ -196,6 +214,16 @@ class DoseWidget(QWidget):
         self.ui.exportTxtButton.clicked.connect(self.save_as_txt)
         self.ui.exportNpButton.clicked.connect(self.save_as_numpy)
         self.ui.clearFitButton.clicked.connect(self.clear_2D_fit)
+        self.ui.showIsoLines.stateChanged.connect(self.isodose_change)
+        self.ui.browseSaveTable.clicked.connect(self.save_file_dialog)
+        self.ui.saveCalculationData.clicked.connect(self.save_calc_to_file)
+        
+        #call some slots explicitly to properly apply loaded values
+        if loadUI:
+            self.toggle_ROI_spec()
+            self.isodose_change()
+            self.update_dose_plot()
+            self.update_marker()
         
         #initialize some variables
         self.savePath = ""
@@ -213,10 +241,14 @@ class DoseWidget(QWidget):
         self.clbAxes = divider.append_axes("right", size="5%", pad=0.6)
 
         self.canvas = FigureCanvas(self.fig)
-        self.toolbar = NavigationToolbar2QT(self.canvas, None)
+        self.toolbar = MyNavigationToolbar(self.canvas, None)
+        self.toolbar.centeredSelection = True
 
         self.ui.imageLayout.addWidget(self.canvas)
         self.ui.imageLayout.addWidget(self.toolbar)
+        
+        #connect the toolbar selection to matploblib as a callback
+        self.canvas.mpl_connect('selection_changed',self.toolbar_selection)
 
     def set_ui_limits(self):
         """set the limits of the various UI elements depending on the dose distribution
@@ -226,8 +258,11 @@ class DoseWidget(QWidget):
         doseMax = np.max(self.doseDistribution)
         self.ui.doseMin.setMaximum(doseMax*10.)
         self.ui.doseMax.setMaximum(doseMax*10.)
+        self.ui.nominalDose.setMaximum(doseMax*10.)
         self.ui.doseMin.setMinimum(0.0)
         self.ui.doseMax.setMinimum(0.0)
+        self.ui.nominalDose.setMinimum(0.0)
+        
         
         self.set_optimal_scale()        
         
@@ -258,9 +293,46 @@ class DoseWidget(QWidget):
         self.settings = settings
 
     def get_settings(self):
-        return self.settings        
+        return self.settings
+
+    def load_ui_values(self):
+        """load values of previously stored session"""
+        #create a QSettings object to store the settings
+        QtSettings=QtCore.QSettings("OncoRay","EBT Evaluation")
+        
+        #load values for various elements        
+        QtSettings.beginGroup("DoseWidget")
+        gui_restore(self.ui,QtSettings)
+        QtSettings.endGroup()
+        
+    def save_ui_values(self):
+        """save the settings of the GUI
+        """
+        #create a QSettings object to store the settings
+        QtSettings=QtCore.QSettings("OncoRay","EBT Evaluation")
+        
+        #save element content
+        QtSettings.beginGroup("DoseWidget")
+        gui_save(self.ui,QtSettings)
+        QtSettings.endGroup()        
 ##############################################################################
 # UI update methods
+    def get_iso_list(self):
+        text = self.ui.isoListField.toPlainText()
+        textList = text.split("\n")
+        isoLines = []
+        for line in textList:
+            try:
+                value = float(line)
+                if value < 0:
+                    raise ValueError
+                isoLines.append(value)
+            except ValueError:
+                logging.error("{!s} is not a senisble percentage".format(line))
+        
+        isoLines.sort()            
+        return np.array(isoLines)
+                    
     def match_ui_inputs(self,newIsMaster=True):
         """caculate the old style ROI specification from the new or vice versa
            depending on who is master
@@ -334,8 +406,9 @@ class DoseWidget(QWidget):
         xMax = shape[1]/self.doseDistribution.DPC
         #plot the dose distrubtion
         self.dosePlot = self.ax1.imshow(self.doseDistribution,
-                                            interpolation="nearest",
-                                            extent=[0,xMax,yMax,0])
+                                        interpolation="nearest",
+                                        extent=[0,xMax,yMax,0],
+                                        zorder=-1)#image should be lowest zorder
                     
         self.clb = self.fig.colorbar(self.dosePlot, cax = self.clbAxes,
                                      orientation="vertical", 
@@ -354,7 +427,32 @@ class DoseWidget(QWidget):
         
         self.update_dose_plot()
             
-
+            
+    def plot_isodose(self):
+        percentages = self.get_iso_list()
+        if len(percentages) == 0:
+            return None
+        shape = self.doseDistribution.shape
+        yMax = shape[0]/self.doseDistribution.DPC
+        xMax = shape[1]/self.doseDistribution.DPC
+        
+        levels = percentages*self.ui.nominalDose.value()/100.
+        cPlot = self.ax1.contour(self.doseDistribution,
+                                 levels = levels,
+                                 colors=self.settings["isodose color"],
+                                 linewidths=self.settings["isodose linewidth"],
+                                 origin='image',
+                                 extent=[0,xMax,yMax,0],
+                                 zorder=0)#set relatively low zorder, so they are just above the image
+        labels = {}
+        for level, percentage in zip(cPlot.levels, percentages):
+            labels[level] = "{:.0f}".format(percentage)
+            
+        cLabels = self.ax1.clabel(cPlot,fmt=labels, 
+                                  fontsize= self.settings["isodose fontsize"])
+        return (cPlot, cLabels)
+                    
+    
     def update_dose_plot(self):
         """set limits and colormap of the dose plot
         """
@@ -367,6 +465,18 @@ class DoseWidget(QWidget):
 
         self.clb.update_normal(self.dosePlot)
 
+        #isodoses
+        #remove old isodoses if there are any
+        if hasattr(self,"contourPlot"):
+            for coll, label in zip(self.contourPlot[0].collections, self.contourPlot[1]):
+                coll.remove()
+                label.remove()
+            del self.contourPlot
+        if self.ui.showIsoLines.isChecked():
+            cPlot = self.plot_isodose()
+            if cPlot is not None:
+                self.contourPlot = cPlot
+        
         #labels and grid
         if self.settings["label axes"]:
             self.ax1.set_xlabel("x-position in cm")
@@ -464,7 +574,7 @@ class DoseWidget(QWidget):
         return artist
 
 ##############################################################################
-# evaluation methods which are called upon clicking calcualte
+# evaluation methods which are called upon when clicking calcualte
         
     def rectangle(self):
         """calculate and print the stats for a rectangle area
@@ -482,6 +592,7 @@ class DoseWidget(QWidget):
         logging.info("minimum: {:.4e} Gy".format(stats[3]))        
         logging.info("maximum: {:.4e} Gy".format(stats[4]))
         logging.info("--------------------------------------------------------------")
+        return stats
         
 
     def ellipse(self):
@@ -502,6 +613,8 @@ class DoseWidget(QWidget):
         logging.info("minimum: {:.4e} Gy".format(stats[3]))        
         logging.info("maximum: {:.4e} Gy".format(stats[4]))
         logging.info("--------------------------------------------------------------")
+        
+        return stats
     
     def profile(self):
         """get a profile of the image
@@ -688,9 +801,10 @@ class DoseWidget(QWidget):
     def calculate(self):
         idx = self.ui.evalFunction.currentIndex()
         try:
-            self.ui.evalFunction.itemData(idx)["eval"]()
+            calcResult = self.ui.evalFunction.itemData(idx)["eval"]()
+            return calcResult
         except ValueError as e:
-            logging.error("Value Error: "+e.message)
+            logging.error("Value Error: "+str(e))
             logging.debug("Tracback: " + traceback.format_exc().replace("\n"," - "))
             logging.error("check evaluation method and ROI")
 
@@ -745,7 +859,10 @@ class DoseWidget(QWidget):
         elif new == self.ui.x1 or new == self.ui.y1:
             self.cid = self.canvas.mpl_connect('button_press_event', 
                                                self.click_to_pos1) 
-    
+    def isodose_change(self):
+        self.ui.nominalDose.setEnabled(self.ui.showIsoLines.isChecked())
+        self.ui.isoListField.setEnabled(self.ui.showIsoLines.isChecked())
+        
     def refresh(self):
         self.update_dose_plot()
         self.canvas.draw()
@@ -783,11 +900,106 @@ class DoseWidget(QWidget):
         else:
             logging.debug("save canceled")
             
+    def save_calc_to_file(self):
+
+        #check if selected evaluation is compatible
+        idx = self.ui.evalFunction.currentIndex()
+        evalFunction = self.ui.evalFunction.itemText(idx)
+        if evalFunction not in ('Rectangle','Ellipse'):
+            logging.error(evalFunction + ' not supported for saving to file, '
+                          'select Rectangle or Ellipse')
+            return
+        
+        filePath = self.ui.saveTablePath.text()
+        if filePath == '':
+            logging.error("please specifiy file path")
+            return
+
+        
+        #calculate the values
+        stats = self.calculate()
+        
+        #names of the value isn correct order
+        statNames = ["sum",
+                     "avg",
+                     "std",
+                     "min",
+                     "max"]
+        
+        #names of the ui fields to be saved
+        uiElementNames = ["xCenter",
+                          "yCenter",
+                          "height",
+                          "width",
+                          "angle"]
+        
+        #combine the names of everything that should be saved             
+        header = ["Film No."] + statNames + ['area type'] + uiElementNames
+        #list of empty strings to take the data
+        saveContent = ['']*len(header)
+        
+        saveContent[header.index('Film No.')] = self.ui.filmNumber.text()       
+        
+        #put values from the stats in the correct list position according to their name
+        for (name, value) in zip(statNames, stats):
+            saveContent[header.index(name)] = str(value)
             
+        saveContent[header.index('area type')] = evalFunction
+        
+        #get values from the desired ui fields and put them in the list
+        for name in uiElementNames:
+            element = getattr(self.ui,name)
+            saveContent[header.index(name)] = str(element.value())
+
+        #add the data from the dose calculation, if present
+        if self.calculationSettings is not None:
+            keys = list(self.calculationSettings.keys())
+            keys.sort()
+            for key in keys:
+                header.append(key)
+                saveContent.append(str(self.calculationSettings[key]))
+                
+        #create strings
+        headerStr = "\t".join(header)+"\n"
+        saveStr = "\t".join(saveContent)+"\n"
+
+        try:
+            if os.path.isfile(filePath):
+                with open(filePath,mode="a") as saveFile:
+                    saveFile.write(saveStr)
+                    logging.info(("info for "+self.ui.filmNumber.text()+" written to file"))
+            else:
+                with open(filePath,mode="w") as saveFile:
+                    saveFile.write(headerStr)
+                    saveFile.write(saveStr)
+                    logging.info(("info for "+self.ui.filmNumber.text()+" written to file"))
+                    
+        except (OSError, IOError) as e:
+            logging.error("failed to write to file"+filePath)
+            logging.debug("Error: "+str(e))
+    
+        
+    def save_file_dialog(self):
+        filePath =QFileDialog.getSaveFileName(self,
+                                              caption = 'select a file to save to',
+                                              directory = self.ui.saveTablePath.text(),
+                                              options = QFileDialog.DontConfirmOverwrite)
+        
+        #in pyqt5 a tuple is returned, unpack it
+        if os.environ['QT_API'] == 'pyqt5':
+            filePath, _ = filePath
+            
+        if filePath != '':
+            self.ui.saveTablePath.setText(filePath)
+        else:
+            logging.info('file selection canceled')
+
+        
     def set_optimal_scale(self):
         doseMax = np.max(self.doseDistribution)
         self.ui.doseMin.setValue(0.0)
         self.ui.doseMax.setValue(doseMax)
+        self.ui.nominalDose.setValue(doseMax)
         
         
     def toggle_ROI_spec(self):
@@ -804,6 +1016,8 @@ class DoseWidget(QWidget):
             self.ui.height.setDisabled(True)
             self.ui.width.setDisabled(True)
             self.ui.angle.setDisabled(True)
+            
+            self.toolbar.centeredSelection=False
              
         else:
             self.ui.x0.setDisabled(True)
@@ -817,5 +1031,76 @@ class DoseWidget(QWidget):
             self.ui.width.setEnabled(True)
             self.ui.angle.setEnabled(True)
             
+            self.toolbar.centeredSelection=True
+            
         self.ROI_value_change()
+        
+    def toolbar_selection(self):
+        #get selection
+        selection = self.toolbar.get_selection()
+        #check for ROI specification scheme
+        if self.ui.alternateSpecToggle.isChecked(): #with simple corners
+            
+            #tuple of elements that need updating (in same order as selection)
+            elements = (self.ui.x0,self.ui.y0,self.ui.x1,self.ui.y1)
+            #block the signals from the elements while updating, then call
+            #the update slot manually. (avoids circular and repeated updates)
+            
+            for element, value in zip(elements, selection):
+                element.blockSignals(True)
+                element.setValue(value)
+                element.blockSignals(False)
+            self.ROI_value_change()
+        else: #with width and center, needs additional calculation
+            
+            #returned values should be ordered (lower value x0, highvalue x1)
+            centerX = (selection[2] + selection[0])/2.0
+            centerY = (selection[3] + selection[1])/2.0
+            
+            #simplify the angle possibilities by using the cyclic nature of rotation
+            #and convert to rad
+            angle = np.pi*(self.ui.angle.value()%180.)/180. 
+            
+            deltaX = selection[2] - selection[0]
+            deltaY = selection[3] - selection[1]
+            
+            
+            
+            if angle >= np.pi/2.0: #greater than 90 is the same as smaller, but switching widht and height
+                angle = angle%(np.pi/2.0)
+                switch = True
+            else:
+                switch = False
+     
+            if angle == 0: # zero is easy
+                width = deltaX
+                height = deltaY
+                
+            #everything else needs special conditions, because there will not 
+            #exist a rotated rectangle for all possible combinations of angles
+            #and widht and height selected
+            else:
+                if angle <= np.pi/4.0: 
+                    deltaY = max(deltaY,np.tan(angle)*deltaX)
+                    deltaX = max(deltaX,np.tan(angle)*deltaY)
+                else:#i.e. pi/4 < angle < pi/2
+                    deltaY = max(deltaY,deltaY/np.tan(angle))
+                    deltaX = max(deltaX,deltaY/np.tan(angle))
+                
+                height = ((np.cos(angle)*deltaY-np.sin(angle)*deltaX) / 
+                          (np.cos(angle)**2-np.sin(angle)**2))
+                
+                width = ((np.cos(angle)*deltaX-np.sin(angle)*deltaY) / 
+                          (np.cos(angle)**2-np.sin(angle)**2))
 
+            
+            if switch:
+                width, height = height, width #amazingly, this works, yeah python
+            
+            for element, value in zip((self.ui.xCenter,self.ui.yCenter,
+                                       self.ui.height, self.ui.width),
+                                      (centerX, centerY, height, width)):
+                element.blockSignals(True)
+                element.setValue(value)
+                element.blockSignals(False)
+            self.ROI_value_change()            

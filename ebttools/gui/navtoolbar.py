@@ -40,7 +40,7 @@ except:
 cursors = Cursors()
 
 class MyNavigationToolbar(NavigationToolbar2QT):
-    """a toolbar with subplots and save removed and a selection tool added
+    """a toolbar with subplots removed and a selection tool added
        connect a callback to "selection_changed" to get notified when the 
        selection is changed
     """
@@ -48,7 +48,7 @@ class MyNavigationToolbar(NavigationToolbar2QT):
     toolitems =[]
     #remove unwanted items from the toolbar and make image names into paths
     for text, tooltip_text, image_file, callback in NavigationToolbar2QT.toolitems:
-        if text not in ('Subplots', 'Save',None):
+        if text not in ('Subplots', None):
             toolitems.append((text, tooltip_text, os.path.join(mplParams["datapath"],'images',image_file),callback))
         elif text is None:
             toolitems.append((text, tooltip_text, image_file,callback))
@@ -69,6 +69,10 @@ class MyNavigationToolbar(NavigationToolbar2QT):
        
         self._ids_selection = []
         self.currentSelection = (0,0,0,0)
+        
+        #a switch to use a selection where the first click marks a center and
+        #the selection is performed symmetrically around that center
+        self.centeredSelection=False
    
    
     #overwrite to remove the joining of paths
@@ -169,7 +173,12 @@ class MyNavigationToolbar(NavigationToolbar2QT):
             if (x is not None and y is not None and a.in_axes(event)):
                 self._selectionStart.append((x, y, a))
 
-        id1 = self.canvas.mpl_connect('motion_notify_event', self.selection_move)
+        if self.centeredSelection:
+            id1 = self.canvas.mpl_connect('motion_notify_event', 
+                                          self.selection_move_centered)
+        else:
+            id1 = self.canvas.mpl_connect('motion_notify_event', 
+                                          self.selection_move)
 
         self._ids_selection = [id1]
 
@@ -187,7 +196,23 @@ class MyNavigationToolbar(NavigationToolbar2QT):
             y, lasty = max(min(y, lasty), y1), min(max(y, lasty), y2)         
             
             self.draw_rubberband(event, x, y, lastx, lasty)
-                                 
+    
+    def selection_move_centered(self, event):
+        """the move mouse for selection callback when using a centered aproach"""
+        if self._selectionStart:
+            
+            x, y = event.x, event.y
+            centerX, centerY, a = self._selectionStart[0]
+            
+            lastx = x - 2*(x-centerX)
+            lasty = y - 2*(y-centerY)
+            
+            x1, y1, x2, y2 = a.bbox.extents
+            x, lastx = max(min(x, lastx), x1), min(max(x, lastx), x2)
+            y, lasty = max(min(y, lasty), y1), min(max(y, lasty), y2)         
+            
+            self.draw_rubberband(event, x, y, lastx, lasty)
+                             
     def selection_released(self, event):
         """the release mouse for selection callback"""
         
@@ -197,6 +222,11 @@ class MyNavigationToolbar(NavigationToolbar2QT):
         x, y = event.x, event.y
         firstx, firsty, a = self._selectionStart[0]
         inv = a.transData.inverted()
+        
+        #for a centered selection convert center+corner to two corners
+        if self.centeredSelection:
+            firstx = x - 2*(x - firstx)
+            firsty = y - 2*(y - firsty)
         
         #ensure that mouse has not moved beyond the axis
         x1, y1, x2, y2 = a.bbox.extents
@@ -208,13 +238,16 @@ class MyNavigationToolbar(NavigationToolbar2QT):
         x1, y1 = inv.transform_point((x, y))
         
         #sort the values in data coordinates
-        x0, x1 = int(min(x0, x1)), int(max(x0,x1))        
-        y0, y1 = int(min(y0, y1)), int(max(y0,y1)) 
+        x0, x1 = min(x0, x1), max(x0,x1)        
+        y0, y1 = min(y0, y1), max(y0,y1) 
+        
+
+            
         
         self.currentSelection = (x0,y0,x1,y1)        
         
-        logging.debug("x0: {:d}, x1: {:d}, y0: {:d}, y1: {:d}".format(x0,x1,
-                                                                      y0,y1))
+        logging.debug("x0: {:.3f}, x1: {:.3f}, y0: {:.3f}, y1: {:.3f}".format(x0,x1,
+                                                                              y0,y1))
                                                                       
         for selection_id in self._ids_selection:
             self.canvas.mpl_disconnect(selection_id)                                                              
