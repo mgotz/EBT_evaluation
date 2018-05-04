@@ -5,6 +5,11 @@
 # the variables making up the calibration can be given as name=value or name:value
 # see below for which values to supply
 
+# generally the calibrations calculate some quantitiy, e.g. dose, per pixel
+# the function takes the general form f(arg(pixel_value))
+# therein f is called the function and arg is called its argument,
+# which is also a function of the pixel_values. 
+
 
 #short name
 [example]
@@ -13,29 +18,35 @@
 tooltip = this is an example calibration for testing
 
 # which color channel to use red, blue, green for colered images or grey for greyscale images
-# use a comma seperates multiple channels for multi channel methods
+# use a comma to seperate multiple channels for multi channel methods
 channel = red
 
-# argument of the function for dose calculation
-# chose "netOD" to use net optical density as argument of the function (arg=log_10[(phi_0 - background)/(value-background)])
-# "direct" to use raw pixel values arg=value-background
-# or "relativeNetOD" to use the ratio of the netOD of two channels
+# argument of the function for dose calculation, options are
+# "direct": raw pixel values, arg=value-background
+# "normalized": pixel values normalized to some value, arg=(value-background)/(phi_0-background)
+# "netOD": net optical density, arg=log_10[(phi_0 - background)/(value-background)]
+# "relativeNetOD": the ratio of the netOD of two channels
+
 argument=netOD
 
-#a background level, to be subtracted from everything (optional)
+#a background level, to be subtracted from everything 
+#optional, default 0
 background = 0.0
 
-#the lowest black level that can be measured. For netOD everything below this value will be coerced to this value (optional, creates warning, though)
+#the lowest black level that can be measured, 
+#for all arguments except "direct" everything below this value will be coerced to this value
+#optional, defaults to 10, creates warning, though
 black = 10.0
 
-#the unit this calibration results in (optional, defaults to Gy), can also be an empty string
+#the unit this calibration results in 
+# optional, defaults to Gy, can also be an empty string
 unit = Gy
 
 # function to calculate the dose
 # currently the functions are implemented: 
 # the "exp_poly": p1*arg+p2*arg^p3 
 # the "linear": p1 + p2*arg
-# and the "rational": p1 + p2/(p3+arg)
+# and the "rational": (p1+arg)/(p2+p3*arg)
 function = exp_poly
 p1=7.15949
 p2=10.1902

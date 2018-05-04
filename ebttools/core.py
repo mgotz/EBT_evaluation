@@ -145,52 +145,87 @@ def calculate_dose(calibration, scan, phi0):
         logging.warning("no definition of background value found in calibration"
                         " falling back to default 0")   
 
+       
     #check proper format of phi0 and allow treatement as a list in any case
     try:
         if len(phi0) != 3:
             raise ValueError("phi0 should have length 3"+
                              " (one value for each channel) or be a scalar")
-    except:
+    except TypeError: #raised if length is not applicable
         phi0 = [phi0]
 
     #get the channels in list
     channels = calibration["channel"].replace(" ","").split(",")
     
+    #flags set by the different argument options, if a min and/or max is needed 
+    #to ensure against matherrors. Used later to issue warning about min and max
+    needsMin = False
+    usesMax = False
+    #define number of channels used by the argument (also used in input checking)
+    numberOfChannels = 0
+    
     #define the argument as a function
     if calibration["argument"] == "netOD":
         arg = lambda x, x0: np.log10((x0-background)/
                                  (np.clip(x,int(ceil(black)),int(floor(x0)))-background))
-        if len(channels) != 1:
-            raise ValueError("netOD requires one and only one channel, "+
-                             "{:d} given".format(len(channels)))
-        if any(black > x0 for x0 in phi0):
-            phiStr = ["{:.2f}".format(x0) for x0 in phi0]
-            raise ValueError("phi0 ("+", ".join(phiStr) +") is smaller"+
-                             " than the black value ({:.2f}). ".format(black) +
-                             "Cannot procede.")
+
+        numberOfChannels = 1
+        needsMin = True #will result in log(-) otherwise
+        usesMax = True #not really needed, but gives negative dose values
         
-    elif calibration["argument"] == "direct":
-        arg = lambda x, phi0: (x-background)
-        if len(channels) != 1:
-            raise ValueError("direct argument requires one and only one channel, "+
-                             "{:d} given".format(len(channels)))
-        
-    elif calibration["argument"] == "relativeNetOD":
-        arg = lambda x1, x2, x01, x02: (
-                np.log10((x01-background)/(np.clip(x1,int(ceil(black)),int(floor(x01)))-background))/
-                 np.log10((x02-background)/(np.clip(x2,int(ceil(black)),int(floor(x02)))-background)))
-        if len(channels) != 2:
-            raise ValueError("relative netOD requires exactly two channels, "+
-                             "{:d} given".format(len(channels)))
         if any(black > x0 for x0 in phi0):
             phiStr = ["{:.2f}".format(x0) for x0 in phi0]
             raise ValueError("phi0 ("+", ".join(phiStr) +") is smaller"+
                              " than the black value ({:.2f}). ".format(black) +
                              "Cannot procede.")
 
+        
+    elif calibration["argument"] == "direct":
+        arg = lambda x, x0: (np.clip(x,black,None)-background)
+        
+        numberOfChannels = 1
+        needsMin = False
+        usesMax = False
+    
+    elif calibration["argument"] == "normalized":
+        arg = lambda x, x0: np.divide(np.clip(x,int(ceil(black)),None)-background,
+                                      x0-background)
+        
+        numberOfChannels = 1
+        needsMin = False
+        usesMax = False
+
+    
+    elif calibration["argument"] == "relativeNetOD":
+        arg = lambda x1, x2, x01, x02: (
+                np.log10((x01-background)/(np.clip(x1,int(ceil(black)),int(floor(x01)))-background))/
+                 np.log10((x02-background)/(np.clip(x2,int(ceil(black)),int(floor(x02)))-background)))
+        numberOfChannels = 2
+        needsMin = False
+        usesMax = False
+        
+
     else:
         raise ValueError("unknown specification for argument in calibration: "
                         +calibration["argument"])
+
+    #check for proper number of channels
+    if len(channels) != numberOfChannels:
+        raise ValueError(calibration["argument"] + 
+                         " requires exactly {:d} channels, ".format(numberOfChannels) +
+                          "{:d} given".format(len(channels)))
+
+    #check for properly established lower limit
+    if needsMin:
+        if (background >= black) and np.any((scan-background) < 0):
+            raise ValueError("scan contains values below the background level, "+
+                             "cannot compute "+calibration["argument"])
+    if needsMin and usesMax:
+        if any(black > x0 for x0 in phi0):
+            phiStr = ["{:.2f}".format(x0) for x0 in phi0]
+            raise ValueError("phi0 ("+", ".join(phiStr) +") is smaller"+
+                             " than the black value ({:.2f}). ".format(black) +
+                             "Cannot procede.")
 
     p1 = float(calibration["p1"])
     p2 = float(calibration["p2"])
@@ -202,7 +237,7 @@ def calculate_dose(calibration, scan, phi0):
     elif calibration["function"] == "linear":
         function = lambda x: p1+p2*x
     elif calibration["function"] == "rational":
-        function = lambda x: p1+p2/(p3+x)
+        function = lambda x: np.divide(p1+x,p2+p3*x)
     else:
         raise ValueError("unknown specification for function in calibration: "
                         +calibration["function"])
