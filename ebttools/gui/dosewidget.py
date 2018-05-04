@@ -52,11 +52,12 @@ from matplotlib.patches import Ellipse, Rectangle
 from matplotlib.lines import Line2D
 import matplotlib.ticker as ticker
 from scipy.optimize import curve_fit
+from scipy.ndimage import gaussian_filter, center_of_mass
 
 # simple edit of additional settings and gui helper functions
 from mg.pyguitools import EasyEditSettings, SimplePlotWindow, gui_save, gui_restore
 #2D gauss fitting
-from mg.dataprocessing import (gauss2D, fit_2D_gauss, cross, FitError)
+from mg.dataprocessing import (gauss2D, fit_2D_gauss, cross, FitError, sg_2d_filter)
 #the DoseArray from ebttools provides the core of the backend    
 from ebttools.core import DoseArray
 
@@ -175,7 +176,13 @@ class DoseWidget(QWidget):
                                                         "tip":"get a profile and fit a gaussian"}),
                                  ("2D Gauss Fit",{"eval":self.fit_2D_gauss,
                                                   "marker":self.axis_parallel_rectangle_marker,
-                                                  "tip":"fit the entire distribution with a 2D Gaussian"})])
+                                                  "tip":"fit the entire distribution with a 2D Gaussian"}),
+                                 ("Find Maximum",{"eval":self.find_max,
+                                                  "marker":self.axis_parallel_rectangle_marker,
+                                                  "tip":"find the maximum and its location in a rectangular selection"}),
+                                 ("Center of Mass",{"eval":self.center_of_mass,
+                                                  "marker":self.axis_parallel_rectangle_marker,
+                                                  "tip":"determine the center of mass in a rectangular selection"})])
         
         #set up combobox with functions dictionary
         for key in functions:
@@ -183,7 +190,24 @@ class DoseWidget(QWidget):
             idx = self.ui.evalFunction.count()-1
             self.ui.evalFunction.setItemData(idx,functions[key]["tip"],
                                              QtCore.Qt.ToolTipRole)
+
+        #the smoothing functions available
+        sFunc = OrderedDict([("Savitzky-Golay",{"name":"sg",
+                                                "settings":self.ui.sgSettingsLayout,
+                                                "tip":"Savitzky-Golay filter fits a polynomial of a given order to a number of points defined by the window size"}),
+                             ("Gaussian",{"name":"gauss",
+                                          "settings":self.ui.gaussSettingsLayout,
+                                          "tip":"Gauss filter averages an area weighted by the defined gaussian"})])
         
+        #list all the settings layouts. This is used for dynamic hiding and showing the relevant assests
+        self.smoothSettings = [self.ui.sgSettingsLayout,self.ui.gaussSettingsLayout]  
+    
+        for key in sFunc:
+            self.ui.smoothFunction.addItem(key,sFunc[key])
+            idx = self.ui.smoothFunction.count()-1
+            self.ui.smoothFunction.setItemData(idx,sFunc[key]["tip"],
+                                               QtCore.Qt.ToolTipRole)
+
         #load UI before connecting slots to avoid needless on change firing
         if loadUI:
             self.load_ui_values()
@@ -203,6 +227,12 @@ class DoseWidget(QWidget):
         self.ui.x1.valueChanged.connect(self.ROI_value_change)
         self.ui.y0.valueChanged.connect(self.ROI_value_change)
         self.ui.y1.valueChanged.connect(self.ROI_value_change)
+        
+        self.ui.smooth.stateChanged.connect(self.smooth_change)
+        self.ui.smoothFunction.currentIndexChanged.connect(self.smooth_combo_change)
+        self.ui.smoothOrder.valueChanged.connect(self.sg_value_change)
+        self.ui.smoothWindowSize.valueChanged.connect(self.sg_value_change)
+        self.ui.smoothSigma.valueChanged.connect(self.gauss_value_change)
 
         qApp.focusChanged.connect(self.focus_change)
         
@@ -225,8 +255,10 @@ class DoseWidget(QWidget):
             self.update_dose_plot()
             self.update_marker()
         
+        self.smooth_change()
         #initialize some variables
         self.savePath = ""
+        self.centerMarker = []
        
        
 ##############################################################################
@@ -288,6 +320,12 @@ class DoseWidget(QWidget):
         self.ui.x1.setMaximum(xMax)
         self.ui.y0.setMaximum(yMax)
         self.ui.y1.setMaximum(yMax)
+        
+        self.ui.smoothWindowSize.setMaximum(max(self.doseDistribution.shape[1],
+                                                self.doseDistribution.shape[0]))
+        self.ui.smoothOrder.setMaximum(self.ui.smoothWindowSize.value()-1)
+        self.ui.smoothSigma.setMaximum(max(self.doseDistribution.shape[1],
+                                           self.doseDistribution.shape[0]))
 
     def set_settings(self, settings):
         self.settings = settings
@@ -404,6 +442,22 @@ class DoseWidget(QWidget):
         shape = self.doseDistribution.shape
         yMax = shape[0]/self.doseDistribution.DPC
         xMax = shape[1]/self.doseDistribution.DPC
+        
+        #smooth if desired
+        if self.ui.smooth.isChecked():
+            if not hasattr(self,"origDoseDistribution"): #save original dose distribution, if not already saved
+                self.origDoseDistribution = self.doseDistribution
+            #create a smoothed array of the original dose and then cast it to an dose array
+            #then copy the DPC and unit from the old array, there should be a more comfortable way....
+            self.doseDistribution = self.smooth_dose(self.origDoseDistribution).view(DoseArray)
+            self.doseDistribution.DPC = self.origDoseDistribution.DPC
+            self.doseDistribution.unit = self.origDoseDistribution.unit
+            
+        elif hasattr(self,"origDoseDistribution"):#restor original dose distribution if smooth is unchecked
+            self.doseDistribution = self.origDoseDistribution
+            del self.origDoseDistribution
+                
+        self.ax1.cla()
         #plot the dose distrubtion
         self.dosePlot = self.ax1.imshow(self.doseDistribution,
                                         interpolation="nearest",
@@ -451,7 +505,42 @@ class DoseWidget(QWidget):
         cLabels = self.ax1.clabel(cPlot,fmt=labels, 
                                   fontsize= self.settings["isodose fontsize"])
         return (cPlot, cLabels)
-                    
+
+    def set_center(self, xCenter, yCenter):
+        """sets the center of the ROI
+           takes care of dealing with the different possible selection schemes"""
+        
+        for element, value in zip((self.ui.xCenter,self.ui.yCenter),(xCenter,yCenter)):
+            #ensure elements are enabled, update the values without signals
+            element.setEnabled(True)
+            element.blockSignals(True)
+            element.setValue(value)
+            element.blockSignals(False)
+            
+            #keep enabled or disable based on the setting alternate spec
+            element.setEnabled((not self.ui.alternateSpecToggle.isChecked())) 
+
+        #match inputs with the center as master and update the ROI marker
+        self.match_ui_inputs(newIsMaster=True)
+        self.update_marker()        
+        
+
+    def smooth_dose(self, originalDose):
+        idx = self.ui.smoothFunction.currentIndex()
+        name = self.ui.smoothFunction.itemData(idx)["name"]
+        if name == "sg":
+            smoothedDose = sg_2d_filter(originalDose,
+                                        self.ui.smoothWindowSize.value(),
+                                        self.ui.smoothOrder.value(),                                             
+                                        derivative=None)
+        elif name == "gauss":
+            smoothedDose = gaussian_filter(originalDose,
+                                           self.ui.smoothSigma.value())
+        else:
+            logging.error("unkown smoothing function with name "+name)
+            smoothedDose = originalDose
+        
+        return smoothedDose                    
     
     def update_dose_plot(self):
         """set limits and colormap of the dose plot
@@ -495,7 +584,7 @@ class DoseWidget(QWidget):
             try:
                 self.area_marker.remove()
             except (ValueError) as e:
-                logging.debug("ignored "+e.message)
+                logging.debug("ignored "+str(e))
         
         #get the appropriate new marker artist
         idx = self.ui.evalFunction.currentIndex()
@@ -505,6 +594,8 @@ class DoseWidget(QWidget):
             self.area_marker = self.ax1.add_artist(artist)
         self.canvas.draw()
 
+
+        
 ##############################################################################
 # markers of the ROI. Each evaluation methods specificies one of these to mark
 # the region of interest and they are then called by the update_marker method
@@ -594,6 +685,36 @@ class DoseWidget(QWidget):
         logging.info("--------------------------------------------------------------")
         return stats
         
+    def center_of_mass(self):
+        """calculate the center of mass
+        """
+        # get resolution and calculate ROI
+        DPC = self.doseDistribution.DPC
+       
+        xlim = sorted([int(self.ui.x0.value()*DPC),int(self.ui.x1.value()*DPC)])
+        ylim = sorted([int(self.ui.y0.value()*DPC),int(self.ui.y1.value()*DPC)])
+        
+        #create a label array for ndimage:
+        label = np.zeros_like(self.doseDistribution,dtype=np.uint8)
+        label[ylim[0]:ylim[1],xlim[0]:xlim[1]]=1
+
+        loc = center_of_mass(self.doseDistribution,labels=label,index=1)    
+
+        yPos = (loc[0]+0.5)/DPC
+        xPos = (loc[1]+0.5)/DPC
+
+        logging.info("### Center of Mass ###")
+        logging.info("location x; y: {:.4e}; {:.4e}".format(yPos, xPos))
+        logging.info("--------------------------------------------------------------")
+
+        self.centerMarker.append(self.ax1.scatter(xPos, yPos, s=100, marker = "+",
+                                                  c=self.settings["area stat linecolor"]))
+        
+        #use the results as input, if desired
+        if self.ui.useAsCenter.isChecked():
+            self.set_center(xPos, yPos)
+        
+        self.canvas.draw()        
 
     def ellipse(self):
         """calculate and print the stats for an ellipse area
@@ -615,6 +736,49 @@ class DoseWidget(QWidget):
         logging.info("--------------------------------------------------------------")
         
         return stats
+    
+    def find_max(self):
+        """find the max and its coordinates in the ROI"""
+        # get resolution and calculate ROI
+        DPC = self.doseDistribution.DPC
+       
+        xlim = sorted([int(self.ui.x0.value()*DPC),int(self.ui.x1.value()*DPC)])
+        ylim = sorted([int(self.ui.y0.value()*DPC),int(self.ui.y1.value()*DPC)])
+        
+        #slicing should only create a view and not copy any data (no/very small memory cost)
+        selection = self.doseDistribution[ylim[0]:ylim[1],xlim[0]:xlim[1]]
+        
+        maximum = float(selection.max())
+        
+        maxLocs = np.argwhere(selection==maximum)
+        
+        if len(maxLocs) > 1:
+            logging.warning("maximum location not unique, "
+                            +"averaging the determined maxima")
+            loc = maxLocs.mean(axis=0)
+        else:
+            loc = maxLocs[0]
+        
+        yPos, xPos = (loc+[ylim[0],xlim[0]]+0.5)/DPC
+        
+        
+        logging.info("### Maximum determination ###")
+        logging.info("max: {:.4e}".format(maximum))
+        logging.info("location x; y: {:.4e}; {:.4e}".format(yPos, xPos))
+        logging.info("--------------------------------------------------------------")        
+        
+                                  
+        self.centerMarker.append(self.ax1.scatter(xPos, yPos, s=100, marker = "+",
+                                                  c=self.settings["area stat linecolor"]))
+        
+        #use the results as input, if desired
+        if self.ui.useAsMax.isChecked():
+            self.ui.doseMax.setValue(maximum)
+        if self.ui.useAsCenter.isChecked():
+            self.set_center(xPos, yPos)
+        
+        self.canvas.draw()
+        
     
     def profile(self):
         """get a profile of the image
@@ -747,6 +911,7 @@ class DoseWidget(QWidget):
     def fit_2D_gauss(self):
         # get resolution and calculate ROI
         DPC = self.doseDistribution.DPC
+       
         xlim = sorted([int(self.ui.x0.value()*DPC),int(self.ui.x1.value()*DPC)])
         ylim = sorted([int(self.ui.y0.value()*DPC),int(self.ui.y1.value()*DPC)])
         
@@ -761,11 +926,16 @@ class DoseWidget(QWidget):
                                                            xlim[0]:xlim[1]],
                                      useRotation=False)
             
+            #calculate center coordinates in the original scale
+            #+0.5 to use the center of the pixel (0th pixel is at 0.5/DPC)
+            xCenter = (popt[1]+xlim[0]+0.5)/DPC
+            yCenter = (popt[2]+ylim[0]+0.5)/DPC
+            
             logging.info("### Results of 2D Guassian fit ###")
             logging.info("A*exp(-(x-x0)^2/(2*sigmaX^2)-(y-y0)^2/(2*sigmaY^2)) + offset")
             logging.info("A = {:.4e} +- {:.4e}".format(popt[0],np.sqrt(cov[0][0])))
             logging.info(("x0/y0 = {:.4e}/{:.4e} +- {:.4e}/{:.4e}"+
-                         "").format((popt[1]+xlim[0])/DPC,(popt[2]+ylim[0])/DPC,
+                         "").format(xCenter,yCenter,
                                     np.sqrt(cov[1][1])/DPC,np.sqrt(cov[2][2])/DPC))        
             logging.info(("simgaX/sigmaY = {:.4e}/{:.4e} +- {:.4e}/{:.4e}"+
                          "").format(popt[3]/DPC,popt[4]/DPC,np.sqrt(cov[3][3])/DPC,np.sqrt(cov[4][4])/DPC))
@@ -785,15 +955,21 @@ class DoseWidget(QWidget):
                                                 extent=(xlim[0]/DPC, xlim[1]/DPC,
                                                         ylim[0]/DPC, ylim[1]/DPC))
 
-            centerMarker = cross((popt[1]+xlim[0])/DPC,(popt[2]+ylim[0])/DPC,
+            centerArtist = cross(xCenter,yCenter,
                                  popt[3]/DPC,popt[4]/DPC,
                                  self.settings["area stat linecolor"])
                                       
-            self.gauss_center = self.ax1.add_artist(centerMarker) 
+            self.centerMarker.append(self.ax1.add_artist(centerArtist))
+            
+            #use the results as input, if desired
+            if self.ui.useAsMax.isChecked():
+                self.ui.doseMax.setValue(popt[0])
+            if self.ui.useAsCenter.isChecked():
+                self.set_center(xCenter, yCenter)
             
             self.canvas.draw()
         except FitError as e:
-            logging.error("error fitting 2D Gaussian: "+e.message)
+            logging.error("error fitting 2D Gaussian: "+str(e))
 
 
 ###############################################################################
@@ -805,22 +981,31 @@ class DoseWidget(QWidget):
             return calcResult
         except ValueError as e:
             logging.error("Value Error: "+str(e))
-            logging.debug("Tracback: " + traceback.format_exc().replace("\n"," - "))
+            logging.debug(traceback.format_exc().replace("\n"," - "))
             logging.error("check evaluation method and ROI")
+        except Exception as e:
+            logging.critical("This should not happen - Excpetion in calculation")
+            logging.critical(traceback.format_exc().replace("\n"," - "))
+
 
     def clear_2D_fit(self):
         if hasattr(self,"contour"):
             try:
                 for coll in self.contour.collections:
                     coll.remove()
+                del self.contour
             except ValueError as e:
-                logging.debug("excepted: "+e.message)
-                
-        if hasattr(self,"gauss_center"):
+                logging.debug("excepted: "+str(e))
+        
+        #clear all the markers
+        empty = False
+        while(not empty):
             try: 
-                self.gauss_center.remove()
-            except ValueError as e:
-                logging.debug("excepted: "+e.message)
+                marker = self.centerMarker.pop()
+                marker.remove()
+            except IndexError:
+                empty = True
+        
 
         self.canvas.draw()                
 
@@ -858,13 +1043,22 @@ class DoseWidget(QWidget):
                                                self.click_to_pos0)
         elif new == self.ui.x1 or new == self.ui.y1:
             self.cid = self.canvas.mpl_connect('button_press_event', 
-                                               self.click_to_pos1) 
+                                               self.click_to_pos1)
+            
+    def gauss_value_change(self):
+        self.redrawDose = True
+            
     def isodose_change(self):
         self.ui.nominalDose.setEnabled(self.ui.showIsoLines.isChecked())
         self.ui.isoListField.setEnabled(self.ui.showIsoLines.isChecked())
         
     def refresh(self):
-        self.update_dose_plot()
+        #remake the doseplot if flag was set, otherwise do minimal update
+        if self.redrawDose:
+            self.make_dose_plot()
+            self.redrawDose = False
+        else:
+            self.update_dose_plot()
         self.canvas.draw()
         
     def ROI_value_change(self):
@@ -1001,6 +1195,48 @@ class DoseWidget(QWidget):
         self.ui.doseMax.setValue(doseMax)
         self.ui.nominalDose.setValue(doseMax)
         
+    def smooth_change(self):
+        if self.ui.smooth.isChecked():
+            self.ui.smoothFunction.setEnabled(True)
+            self.smooth_combo_change()
+        else:
+            self.ui.smoothFunction.setDisabled(True)
+            #hide everything
+            for layout in self.smoothSettings:
+                for i in range(layout.count()):
+                    try:
+                        layout.itemAt(i).widget().hide()
+                    except AttributeError as e:
+                        logging.debug(str(e))
+        self.redrawDose = True
+    
+    def smooth_combo_change(self):
+        #hide everything
+        for layout in self.smoothSettings:
+            for i in range(layout.count()):
+                try:
+                    layout.itemAt(i).widget().hide()
+                except AttributeError as e:
+                    logging.debug(str(e))
+        
+        #show the settings relevant to the current function
+        idx = self.ui.smoothFunction.currentIndex()
+        currentSettings = self.ui.smoothFunction.itemData(idx)["settings"]
+        for i in range(currentSettings.count()):
+            try:
+                currentSettings.itemAt(i).widget().show()
+            except AttributeError as e:
+                logging.debug(str(e))
+
+    def sg_value_change(self):
+        windowSize = self.ui.smoothWindowSize.value()
+        if (windowSize % 2) == 0:
+           self.ui.smoothWindowSize.setValue(windowSize+1)
+          
+        self.ui.smoothOrder.setMaximum(self.ui.smoothWindowSize.value()-1)
+        self.redrawDose = True
+    
+
         
     def toggle_ROI_spec(self):
         """switch between the two blocks of defining the ROI

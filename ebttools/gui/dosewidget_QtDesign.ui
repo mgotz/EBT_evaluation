@@ -252,6 +252,146 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
         <item>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="smooth">
+              <property name="text">
+               <string>smooth data with</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="smoothFunction"/>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="gaussSettingsLayout">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <spacer name="horizontalSpacer_13">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_23">
+              <property name="text">
+               <string>sigma</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="smoothSigma">
+              <property name="toolTip">
+               <string>Sigma of the gaussian smoothing in pixels</string>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="sgSettingsLayout">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <spacer name="horizontalSpacer_14">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="smoothLabel1">
+              <property name="text">
+               <string>window size</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="smoothWindowSize">
+              <property name="toolTip">
+               <string>Window size for the Savitzky-Golay filter. Larger window size results in strong smoothing, can only be odd.</string>
+              </property>
+              <property name="minimum">
+               <number>3</number>
+              </property>
+              <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="singleStep">
+               <number>2</number>
+              </property>
+              <property name="value">
+               <number>3</number>
+              </property>
+              <property name="toolTipDuration" stdset="0">
+               <number>-4</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="smoothLabel2">
+              <property name="text">
+               <string>order</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="smoothOrder">
+              <property name="toolTip">
+               <string>Order of the polynomial fitted in the Savitzky-Golay filter, must be windowSize-1, smaller will smooth more strongly. Order of 0 should be equivalent to a moving average.</string>
+              </property>
+              <property name="minimum">
+               <number>0</number>
+              </property>
+              <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>2</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="Line" name="line_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="refreshButton">
           <property name="text">
            <string>refresh dose plot</string>
@@ -679,9 +819,49 @@ p, li { white-space: pre-wrap; }
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <layout class="QHBoxLayout" name="horizontalLayout_13">
           <property name="topMargin">
            <number>10</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="useAsCenter">
+            <property name="toolTip">
+             <string>Use calculation results as input for x-center and y-center of ROI. Works only with methods that calculate a center-like coordinate, e.g. 2D Gauss or Max.</string>
+            </property>
+            <property name="text">
+             <string>use result as center</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="useAsMax">
+            <property name="toolTip">
+             <string>Use the calculation result as max for the dose limits in the visualization. Only applicable to methods that output a maxlike value, e.g. 2D Gauss or center of mass.</string>
+            </property>
+            <property name="text">
+             <string>use result as max</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_15">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <property name="topMargin">
+           <number>0</number>
           </property>
           <item>
            <widget class="QPushButton" name="calculateButton">
@@ -916,11 +1096,35 @@ p, li { white-space: pre-wrap; }
   </layout>
  </widget>
  <tabstops>
+  <tabstop>tabWidget</tabstop>
   <tabstop>doseMin</tabstop>
   <tabstop>doseMax</tabstop>
+  <tabstop>bestLimits</tabstop>
+  <tabstop>showIsoLines</tabstop>
+  <tabstop>nominalDose</tabstop>
+  <tabstop>isoListField</tabstop>
   <tabstop>refreshButton</tabstop>
   <tabstop>exportTxtButton</tabstop>
   <tabstop>exportNpButton</tabstop>
+  <tabstop>evalFunction</tabstop>
+  <tabstop>xCenter</tabstop>
+  <tabstop>yCenter</tabstop>
+  <tabstop>width</tabstop>
+  <tabstop>height</tabstop>
+  <tabstop>angle</tabstop>
+  <tabstop>alternateSpecToggle</tabstop>
+  <tabstop>x0</tabstop>
+  <tabstop>y0</tabstop>
+  <tabstop>x1</tabstop>
+  <tabstop>y1</tabstop>
+  <tabstop>calculateButton</tabstop>
+  <tabstop>clearFitButton</tabstop>
+  <tabstop>saveTablePath</tabstop>
+  <tabstop>browseSaveTable</tabstop>
+  <tabstop>filmNumber</tabstop>
+  <tabstop>saveCalculationData</tabstop>
+  <tabstop>doubleSpinBox</tabstop>
+  <tabstop>depthDoseButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>
