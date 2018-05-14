@@ -95,7 +95,7 @@ def load_calibrations(path):
         raise IOError(255,"no files found",path)
         
     for fileName in fileList:
-        with codecs.open(os.path.join(path,fileName),"r","utf8") as configFile:
+        with codecs.open(os.path.join(path,fileName),"r","utf-8-sig") as configFile:
             try:
                 config = ConfigParser()
                 config.readfp(configFile)
@@ -104,7 +104,7 @@ def load_calibrations(path):
             except MissingSectionHeaderError:
                 logging.warning("{!s} not a readable calibration".format(fileName))
             except UnicodeDecodeError:
-                logging.warning("{!s} not a readable utf-8 calibration".format(fileName))
+                logging.warning("{!s} not a readable utf-8 file".format(fileName))
           
     if len(calibrations) == 0:
         raise IOError(255,"files contain no readable calibration",path)

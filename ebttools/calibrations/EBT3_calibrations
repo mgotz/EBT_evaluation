@@ -95,3 +95,15 @@ p1 = 4.55872
 p2 = 11.17996
 p3 = 1.38082
 
+[EBT 3 high dose proton SOBP Lot04181701]
+tooltip = green channel calibration for lot 04181701 in SOBP of proton beam from 09.04.2018
+
+channel = green
+argument = normalized
+function = rational
+
+unit = Gy
+
+p1 = -1
+p2 = -0.00874
+p3 = -0.07749
