@@ -93,6 +93,7 @@ p1 = 4.55872
 p2 = 11.17996
 p3 = 1.38082
 
+
 [EBT 3 high dose proton SOBP Lot04181701]
 tooltip = green channel calibration for lot 04181701 in SOBP of proton beam from 09.04.2018
 
@@ -133,7 +134,7 @@ p1 = -1.0
 p2 = -0.0359
 p3 = -0.227
 
-[EBT 3 Elektronen Lot04181701]
+[EBT 3 18MeV electrons Lot04181701]
 tooltip = single channel calibration for lot 04181701 for 18 MeV electron beam from 04.07.2017
 
 channel = red
@@ -146,7 +147,7 @@ p1 = -1.0
 p2 = -0.0307
 p3 = -0.223
 
-[EBT 3 Photonen Lot04181701]
+[EBT 3 6MV photons Lot04181701]
 tooltip = single channel calibration for lot 04181701 for 6 MV photon beam from 04.07.2017
 
 channel = red

@@ -20,7 +20,7 @@ def read(fname):
 
 setup(
     name='ebttools',
-    version='2.0.0a',
+    version='2.0.1a',
     
     packages=find_packages(exclude=("tests")), #automagically include all subfolders as packages, but don't install the tests
     package_data = {"":["*.png"],
