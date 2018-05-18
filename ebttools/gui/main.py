@@ -231,13 +231,20 @@ class MainGui(QMainWindow):
         #if it already exists ask to overwrite or append
         if os.path.isfile(path):
             title = "path already exists"
-            text = path+"already exists, overwrite or append?"
+            text = (path+" already exists. Should it be overwritten? \n"
+                    + "No will append to the file. "
+                    + "Choose Abort to select another file")
             overwriteAnswer = QMessageBox.question(self,title,text,
-                                                   "append","overwrite","abort")
-            if overwriteAnswer == 0:
+                                                   QMessageBox.Yes | QMessageBox.No | QMessageBox.Abort,
+                                                   QMessageBox.No)
+            #if selected no, append to the file, i.e. return the path as checked
+            if overwriteAnswer == QMessageBox.No:
                 return path
-            elif overwriteAnswer == 2:
+            #empty path return on abort
+            elif overwriteAnswer == QMessageBox.Abort:
                 return ""
+            #with yes the method continues and will overwrite the file
+            
         #should not be a dir
         elif os.path.isdir(path):
             logging.error("specified path is a directory")
