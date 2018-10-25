@@ -63,14 +63,14 @@ except ImportError as e:
 #define which array index corresponds to which color
 rgbMap = {"red":0,"green":1,"blue":2}
 
-def load_calibrations(path):
+def load_calibrations(path = None):
     """loads ini style calibration files from path
     
     Parameters
     ---------
     path : file path
         either a single calibration file or a folder containing only calibration
-        file
+        files
     
     Returns
     -------
@@ -78,6 +78,10 @@ def load_calibrations(path):
         contains a named entry for each calibration with the respective values
         as a dictionary
     """
+    
+    #default calibrations location
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__),"calibrations")
     
     #make a new ordered dictionary, that way keys remain in some sensible order
     #when iterating over the dict
@@ -273,7 +277,7 @@ def calculate_dose(calibration, scan, phi0):
     return function(arg(*(relevantScanData+relevantPhi0)))
 
 class DoseArray(np.ndarray):
-    """ class to conatain a dose distribution
+    """ class to contain a dose distribution
     
     this is basically a ndarray with some additional methods and properties
     the dose can be used and accessed just like it were in a standard ndarray
